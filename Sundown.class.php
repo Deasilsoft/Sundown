@@ -324,14 +324,14 @@ class Sundown {
         self::ID_SUB => "
         (                                                               # [0]
             (?<!\\\\)                                                   # match escape
-            ((?:\\!^)+)                                                 # [1] match syntax
+            ((?:\\!\\^)+)                                               # [1] match syntax
             ([^ ]+?|\\(.+?\\))                                          # [2] match content
         )mx",
 
         self::ID_SUP => "
         (                                                               # [0]
             (?<!\\\\)                                                   # match escape
-            (^+)                                                        # [1] match syntax
+            (\\^+)                                                      # [1] match syntax
             ([^ ]+?|\\(.+?\\))                                          # [2] match content
         )mx",
 
@@ -543,10 +543,6 @@ class Sundown {
                 $this->options["frame-height"]
             );
 
-        } else {
-
-            $match[0][static::MATCH_RESULT] = null;
-
         }
 
     }
@@ -633,6 +629,8 @@ class Sundown {
     }
 
     private function _handle_description_list (&$match) {
+
+        $match[0][static::MATCH_RESULT] = "test";
 
     }
 
@@ -778,6 +776,54 @@ class Sundown {
 
     }
 
+    private function _process_pattern ($id, $text, &$markdown) {
+
+        // grab all the matches from the text
+        preg_match_all($this->patterns[$id], $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+
+        var_dump($this->patterns[$id]);
+        if ($id == static::ID_UNDERLINED_HEADER) var_dump($matches);
+
+        // add MATCH_BOUNDARY as a value to the match
+        foreach ($matches as &$match) $match[0][static::MATCH_BOUNDARY] = $match[0][static::MATCH_ORIGIN] + strlen($match[0][static::MATCH_STRING]);
+
+        // filter all matches of the pattern
+        // these are referred to as "current match"
+        $matches = array_filter($matches, function ($match) use (&$markdown) {
+
+            // filter all previous matches that are found to be within the current match
+            // also iterates to check if current match isn't inside any previous matches
+            foreach ($markdown as &$matches) $matches = array_filter($matches, function ($_match) use (&$match) {
+
+                if (($match[0][static::MATCH_ORIGIN] >= $_match[0][static::MATCH_ORIGIN] &&         // if (ORIGIN is after other ORIGIN
+                        $match[0][static::MATCH_ORIGIN] <= $_match[0][static::MATCH_BOUNDARY]) ||   // and before other BOUNDARY)
+                    ($match[0][static::MATCH_BOUNDARY] >= $_match[0][static::MATCH_ORIGIN] &&       // or if (BOUNDARY is after other ORIGIN
+                        $match[0][static::MATCH_BOUNDARY] <= $_match[0][static::MATCH_BOUNDARY]))   // and before other BOUNDARY)
+
+                    // empty current match
+                    $match = null;
+
+                if ($match[0][static::MATCH_ORIGIN] <= $_match[0][static::MATCH_ORIGIN] &&          // if (ORIGIN is before other ORIGIN
+                    $match[0][static::MATCH_BOUNDARY] >= $_match[0][static::MATCH_BOUNDARY])        // and BOUNDARY after other BOUNDARY)
+
+                    // destroy previous match, since it has a parent (I do not support prolicide, but this is an exception)
+                    return false;
+
+                return $_match;
+
+            });
+
+            // destroy match if empty
+            if (empty($match)) return false;
+            else return $match;
+
+        });
+
+        // store the matches inside the markdown array
+        $markdown[$id] = $matches;
+
+    }
+
     private function _convert_block ($text) {
 
         $markdown = [];
@@ -869,6 +915,7 @@ class Sundown {
 
         $text = null;                                                                               // make empty string
         foreach ($this->_sort_matches($markdown) as $match) $text .= $match[static::MATCH_RESULT];  // append each consecutive block
+
         return $text;
 
     }
@@ -902,6 +949,19 @@ class Sundown {
 
     }
 
+    private function _destroy_empty (&$markdown) {
+
+        // go trough every set of matches and filter out empty matches
+        foreach ($markdown as &$matches) $matches = array_filter($matches, function ($match) {
+
+            if (!isset($match[0][static::MATCH_RESULT])) return false;  // destroy matches with no result
+
+            return $match;
+
+        });
+
+    }
+
     private function _sort_matches ($markdown, $reverse = false) {
 
         $sorted_matches = [];
@@ -916,67 +976,6 @@ class Sundown {
         });
 
         return $sorted_matches;
-
-    }
-
-    private function _process_pattern ($id, $text, &$markdown) {
-
-        // grab all the matches from the text
-        preg_match_all($this->patterns[$id], $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
-
-        if (empty($matches)) return;
-
-        // add MATCH_BOUNDARY as a value to the match
-        foreach ($matches as &$match) $match[0][static::MATCH_BOUNDARY] = $match[0][static::MATCH_ORIGIN] + strlen($match[0][static::MATCH_STRING]);
-
-        // filter all matches of the pattern
-        // these are referred to as "current match"
-        $matches = array_filter($matches, function ($match) use (&$markdown) {
-
-            // filter all previous matches that are found to be within the current match
-            // also iterates to check if current match isn't inside any previous matches
-            foreach ($markdown as &$matches) $matches = array_filter($matches, function ($_match) use (&$match, &$destroy_match) {
-
-                if (($match[0][static::MATCH_ORIGIN] >= $_match[0][static::MATCH_ORIGIN] &&         // if (ORIGIN is after other ORIGIN
-                        $match[0][static::MATCH_ORIGIN] <= $_match[0][static::MATCH_BOUNDARY]) ||   // and before other BOUNDARY)
-                    ($match[0][static::MATCH_BOUNDARY] >= $_match[0][static::MATCH_ORIGIN] &&       // or if (BOUNDARY is after other ORIGIN
-                        $match[0][static::MATCH_BOUNDARY] <= $_match[0][static::MATCH_BOUNDARY]))   // and before other BOUNDARY)
-
-                    // empty current match
-                    $match = null;
-
-                if ($match[0][static::MATCH_ORIGIN] <= $_match[0][static::MATCH_ORIGIN] &&          // if (ORIGIN is before other ORIGIN
-                    $match[0][static::MATCH_BOUNDARY] >= $_match[0][static::MATCH_BOUNDARY])        // and BOUNDARY after other BOUNDARY)
-
-                    // destroy previous match, since it has a parent (I do not support prolicide, but this is an exception)
-                    return false;
-
-                return $_match;
-
-            });
-
-            // destroy match if empty
-            if (empty($match)) return false;
-            else return $match;
-
-        });
-
-        // store the matches inside the markdown array
-        $markdown[$id] = $matches;
-
-    }
-
-    private function _destroy_empty (&$markdown) {
-
-        // go trough every set of matches and filter out empty matches
-        foreach ($markdown as &$matches) $matches = array_filter($matches, function ($match) {
-
-            if (empty($match)) return false;                            // destroy empty matches
-            if (!isset($match[0][static::MATCH_RESULT])) return false;  // destroy matches with no result
-
-            return $match;
-
-        });
 
     }
 
