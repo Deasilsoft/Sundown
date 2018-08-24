@@ -120,8 +120,8 @@ class Sundown {
             (?:                                                         # repeatable start
                 ^                                                       # line begin
                 (?:                                                     # repeatable start
-                    [<>]?                                               # match alignment
                     \\|                                                 # match syntax
+                    [<>]?                                               # match alignment
                     .+?                                                 # match content
                 )+                                                      # repeatable end
                 \\|?                                                    # optional syntax
@@ -194,14 +194,14 @@ class Sundown {
                     (?:\\ {1,4}|\\t)                                    # match syntax
                     .+?                                                 # match content
                 )*                                                      # repeatable end
-            )+                                                          # repeatable end
+            )*                                                          # repeatable end
             $                                                           # line end
         )mx",
 
         self::ID_UNORDERED_LIST => "
         (                                                               # [0]
             ^                                                           # line begin
-            ([\\-+*])\\                                                 # [1] match list delimiter
+            [\\-+*]\\                                                   # match list delimiter
             .+?                                                         # match content (first line)
             (?:                                                         # repeatable begin
                 \\R+                                                    # line new
@@ -210,21 +210,21 @@ class Sundown {
             )*                                                          # repeatable end
             (?:                                                         # repeatable begin
                 \\R                                                     # line new
-                \\1\\                                                   # match list delimiter
+                [\\-+*]\\                                               # match list delimiter
                 .+?                                                     # match content
                 (?:                                                     # repeatable begin
                     \\R+                                                # line new
                     (?:\\ {1,4}|\\t)                                    # match syntax
                     .+?                                                 # match content
                 )*                                                      # repeatable end
-            )+                                                          # repeatable end
+            )*                                                          # repeatable end
             $                                                           # line end
         )mx",
 
         self::ID_DESCRIPTION_LIST => "
         (                                                               # [0]
             ^                                                           # line begin
-            ([\\-+*])\\1\\1?\\                                          # [1] match list delimiter
+            ([\\-+*])\\1{1,2}\\                                         # [1] match list delimiter
             .+?                                                         # match content (first line)
             (?:                                                         # repeatable begin
                 \\R+                                                    # line new
@@ -233,14 +233,14 @@ class Sundown {
             )*                                                          # repeatable end
             (?:                                                         # repeatable begin
                 \\R                                                     # line new
-                \\1\\1\\1?\\                                            # match list delimiter
+                ([\\-+*])\\2{1,2}\\                                     # [2] match list delimiter
                 .+?                                                     # match content
                 (?:                                                     # repeatable begin
                     \\R+                                                # line new
                     (?:\\ {1,4}|\\t)                                    # match syntax
                     .+?                                                 # match content
                 )*                                                      # repeatable end
-            )+                                                          # repeatable end
+            )*                                                          # repeatable end
             $                                                           # line end
         )mx",
 
@@ -389,7 +389,7 @@ class Sundown {
         self::ID_FRAME => "<iframe src='%s' width='%s' height='%s' frameborder='0' allowfullscreen></iframe>\n",
         self::ID_ORDERED_LIST => ["<ol>\n%s</ol>\n", "<li>\n%s</li>\n"],
         self::ID_UNORDERED_LIST => ["<ul>\n%s</ul>\n", "<li>\n%s</li>\n"],
-        self::ID_DESCRIPTION_LIST => ["<dl>\n%s</dl>\n", "<dt>\n%s</dt>\n", "<dd>\n%s</dd>\n"],
+        self::ID_DESCRIPTION_LIST => ["<dl>\n%s</dl>\n", "<dt>\n%s\n</dt>\n", "<dd>\n%s\n</dd>\n"],
         self::ID_NUMBERED_HEADER => "<h%1\$d>%2\$s</h%1\$d>\n",
         self::ID_UNDERLINED_HEADER => ["<h1 class='display-2'>%s</h1>\n", "<h2 class='display-4'>%s</h2>\n",],
         self::ID_HORIZONTAL_RULE => "<hr>\n",
@@ -551,11 +551,12 @@ class Sundown {
 
     private function _handle_ordered_list (&$match) {
 
-        $list = preg_split("(^\\\\?\d+\. )m", $match[0][static::MATCH_STRING]);
+        $list = preg_split("(^\d+\. )m", $match[0][static::MATCH_STRING]);
         array_shift($list);
 
         foreach ($list as &$item) {
 
+            // remove all whitespace in front
             $text = preg_replace("(^ +)m", "", $item);
 
             if (substr_count($text, "\n") > 1) {
@@ -569,14 +570,10 @@ class Sundown {
                     $this->_get_block_result($markdown)
                 );
 
-            } else {
-
-                $item = sprintf(
-                    $this->formats[static::ID_ORDERED_LIST][1],
-                    $this->_convert_inline($text)
-                );
-
-            }
+            } else $item = sprintf(
+                $this->formats[static::ID_ORDERED_LIST][1],
+                $this->_convert_inline($text)
+            );
 
         }
 
@@ -587,15 +584,17 @@ class Sundown {
 
     }
 
+    // TODO: COMMENTS ABOVE
+
     private function _handle_unordered_list (&$match) {
 
         // split up the string into a list, where every element is a list item
-        $list = preg_split("(^\\\\?[\-*+] )m", $match[0][static::MATCH_STRING]);
+        $list = preg_split("(^[\\-+*] )m", $match[0][static::MATCH_STRING]);
         array_shift($list); // destroy first element
 
         foreach ($list as &$item) {
 
-            // remove all whitespace in front of each line
+            // remove all whitespace in front
             $text = preg_replace("(^ +)m", "", $item);
 
             // if the list item contains more than one line, process the content as blocks
@@ -609,17 +608,13 @@ class Sundown {
 
                 $item = sprintf(
                     $this->formats[static::ID_UNORDERED_LIST][1],       // format for UNORDERED_LIST (item)
-                    $this->_get_block_result($markdown)                 // get result of the string
+                    $this->_get_block_result($markdown)                 // get the result of the string
                 );
 
-            } else {
-
-                $item = sprintf(
-                    $this->formats[static::ID_UNORDERED_LIST][1],       // format for UNORDERED_LIST (item)
-                    $this->_convert_inline($text)                       // get the result of the string
-                );
-
-            }
+            } else $item = sprintf(
+                $this->formats[static::ID_UNORDERED_LIST][1],           // format for UNORDERED_LIST (item)
+                $this->_convert_inline($text)                           // get the result of the string
+            );
 
         }
 
@@ -632,7 +627,86 @@ class Sundown {
 
     private function _handle_description_list (&$match) {
 
-        $match[0][static::MATCH_RESULT] = "test";
+        // split up the string into a list, where every element is a list item
+        $list = preg_split("((?:^|\\R)([\\-+*]{2,3}) )m", $match[0][static::MATCH_STRING], null, PREG_SPLIT_DELIM_CAPTURE);
+        array_shift($list); // destroy first element
+
+        for ($i = 0; $i < count($list); $i += 2) {
+
+            // get list item
+            $text = &$list[$i + 1];
+
+            // get list delimiter
+            $delimiter = &$list[$i];
+
+            // remove all whitespace in front
+            $text = preg_replace("(^ +)m", "", $text);
+
+            // if the list item contains more than one line, process the content as blocks
+            // otherwise just process the content as inline
+            if (substr_count($text, "\n") > 1) {
+
+                $markdown = [];
+
+                // process the block patterns we allow inside DESCRIPTION_LIST (title/description)
+                $this->_process_pattern(static::ID_PARAGRAPH, $text, $markdown);
+
+                switch (strlen($delimiter)) {
+
+                    case 3:
+
+                        $text = sprintf(
+                            $this->formats[static::ID_DESCRIPTION_LIST][2], // format for DESCRIPTION_LIST (title)
+                            $this->_get_block_result($markdown)             // get the result of the string
+                        );
+
+                    break;
+
+                    case 2:
+
+                        $text = sprintf(
+                            $this->formats[static::ID_DESCRIPTION_LIST][1], // format for DESCRIPTION_LIST (description)
+                            $this->_get_block_result($markdown)             // get the result of the string
+                        );
+
+                    break;
+
+                }
+
+            } else switch (strlen($delimiter)) {
+
+                case 3:
+
+                    $text = sprintf(
+                        $this->formats[static::ID_DESCRIPTION_LIST][2], // format for DESCRIPTION_LIST (title)
+                        $this->_convert_inline($text)                   // get the result of the string
+                    );
+
+                break;
+
+                case 2:
+
+                    $text = sprintf(
+                        $this->formats[static::ID_DESCRIPTION_LIST][1], // format for DESCRIPTION_LIST (description)
+                        $this->_convert_inline($text)                   // get the result of the string
+                    );
+
+                break;
+
+            }
+
+            // empty delimiter
+            $delimiter = null;
+
+        }
+
+        // remove all empty elements
+        $list = array_filter($list);
+
+        $match[0][static::MATCH_RESULT] = sprintf(
+            $this->formats[static::ID_DESCRIPTION_LIST][0],             // format for DESCRIPTION_LIST (list)
+            implode("", $list)                                          // merge list
+        );
 
     }
 
@@ -779,6 +853,9 @@ class Sundown {
 
         // grab all the matches from the text
         preg_match_all($this->patterns[$id], $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+
+        // exit if no matches were found
+        if (empty($matches)) return;
 
         // add MATCH_BOUNDARY as a value to the match
         foreach ($matches as &$match) $match[0][static::MATCH_BOUNDARY] = $match[0][static::MATCH_ORIGIN] + strlen($match[0][static::MATCH_STRING]);
