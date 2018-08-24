@@ -77,7 +77,7 @@ class Sundown {
     const ID_SUP = 0xF05;
     const ID_STRONG = 0xF06;
     const ID_EMPHASIS = 0xF07;
-    const ID_STRIKETHROUGH = 0xF08;
+    const ID_STRIKEOUT = 0xF08;
     const ID_LINEBREAK = 0xF09;
 
     const PATTERNS = [
@@ -258,7 +258,7 @@ class Sundown {
             ^                                                           # line begin
             (.+?)                                                       # [1] match content
             \\R                                                         # line new
-            ([\\-=])\\2{2,}                                             # [2] match syntax
+            (-|=)\\2{2,}                                                # [2] match syntax
             $                                                           # line end
         )mx",
 
@@ -353,7 +353,7 @@ class Sundown {
             \\1                                                         # match end
         )mx",
 
-        self::ID_STRIKETHROUGH => "
+        self::ID_STRIKEOUT => "
         (
             (?<!\\\\)                                                   # match escape
             (~~)                                                        # [1] match start
@@ -407,7 +407,7 @@ class Sundown {
         self::ID_SUP => "<sup>%s</sup>",
         self::ID_STRONG => "<strong>%s</strong>",
         self::ID_EMPHASIS => "<em>%s</em>",
-        self::ID_STRIKETHROUGH => "<s>%s</s>",
+        self::ID_STRIKEOUT => "<s>%s</s>",
         self::ID_LINEBREAK => "<br>",
 
     ];
@@ -481,7 +481,9 @@ class Sundown {
      */
     public function convert ($text) {
 
-        if (empty($text)) return null;
+        if (empty($text)) return null;                  // handle empty string
+        $text = preg_replace("(\\R)", "\n", $text);     // convert EOL to linux style
+
         return $this->_convert_block($text);
 
     }
@@ -646,17 +648,14 @@ class Sundown {
 
     private function _handle_underlined_header (&$match) {
 
-        // split string into two string objects, line 1 and line 2
-        $lines = explode("\n", $match[0][static::MATCH_STRING]);
-
         // switch first char on line 2
-        switch (substr($lines[1], 0, 1)) {
+        switch ($match[2][static::MATCH_STRING]) {
 
             case "=":                                                   // if line 2 consists of =
 
                 $match[0][static::MATCH_RESULT] = sprintf(
                     $this->formats[static::ID_UNDERLINED_HEADER][0],    // format for UNDERLINED_HEADER with =
-                    $lines[0]                                           // string to display in client (line 1)
+                    $match[1][static::MATCH_STRING]                     // string to display in client (line 1)
                 );
 
             break;
@@ -665,7 +664,7 @@ class Sundown {
 
                 $match[0][static::MATCH_RESULT] = sprintf(
                     $this->formats[static::ID_UNDERLINED_HEADER][1],    // format for UNDERLINED_HEADER with -
-                    $lines[0]                                           // string to display in client (line 1)
+                    $match[1][static::MATCH_STRING]                     // string to display in client (line 1)
                 );
 
             break;
@@ -760,10 +759,10 @@ class Sundown {
 
     }
 
-    private function _handle_strikethrough (&$match) {
+    private function _handle_strikeout (&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
-            $this->formats[static::ID_STRIKETHROUGH],                   // format for STRIKETHROUGH
+            $this->formats[static::ID_STRIKEOUT],                       // format for STRIKEOUT
             $match[2][static::MATCH_STRING]                             // string to be formatted
         );
 
@@ -858,7 +857,7 @@ class Sundown {
         $this->_process_pattern(static::ID_SUP, $text, $markdown);
         $this->_process_pattern(static::ID_STRONG, $text, $markdown);
         $this->_process_pattern(static::ID_EMPHASIS, $text, $markdown);
-        $this->_process_pattern(static::ID_STRIKETHROUGH, $text, $markdown);
+        $this->_process_pattern(static::ID_STRIKEOUT, $text, $markdown);
         $this->_process_pattern(static::ID_LINEBREAK, $text, $markdown);
 
         // return the result of the input string
@@ -928,7 +927,7 @@ class Sundown {
         if (isset($markdown[static::ID_SUP])) foreach ($markdown[static::ID_SUP] as &$match) $this->_handle_sup($match);
         if (isset($markdown[static::ID_STRONG])) foreach ($markdown[static::ID_STRONG] as &$match) $this->_handle_strong($match);
         if (isset($markdown[static::ID_EMPHASIS])) foreach ($markdown[static::ID_EMPHASIS] as &$match) $this->_handle_emphasis($match);
-        if (isset($markdown[static::ID_STRIKETHROUGH])) foreach ($markdown[static::ID_STRIKETHROUGH] as &$match) $this->_handle_strikethrough($match);
+        if (isset($markdown[static::ID_STRIKEOUT])) foreach ($markdown[static::ID_STRIKEOUT] as &$match) $this->_handle_strikeout($match);
         if (isset($markdown[static::ID_LINEBREAK])) foreach ($markdown[static::ID_LINEBREAK] as &$match) $this->_handle_linebreak($match);
 
         // destroy empty matches
