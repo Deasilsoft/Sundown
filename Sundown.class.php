@@ -326,14 +326,30 @@ class Sundown {
             (?<!\\\\)                                                   # match escape
             !                                                           # match syntax
             (\\^+)                                                      # [1] match syntax
-            (\\(.+?\\)|[^ ]+)                                           # [2] match content
+            (                                                           # [2] match begin
+                (?<!\\\\)                                               # [2] match escape
+                \\(                                                     # [2] match syntax
+                .+?                                                     # [2] match content
+                (?<!\\\\)                                               # [2] match escape
+                \\)                                                     # [2] match syntax
+                |                                                       # [2] else
+                [^ ]+                                                   # [2] match content
+            )                                                           # [2] match end
         )mx",
 
         self::ID_SUP => "
         (                                                               # [0]
             (?<!\\\\)                                                   # match escape
             (\\^+)                                                      # [1] match syntax
-            (\\(.+?\\)|[^ ]+)                                           # [2] match content
+            (                                                           # [2] match begin
+                (?<!\\\\)                                               # [2] match escape
+                \\(                                                     # [2] match syntax
+                .+?                                                     # [2] match content
+                (?<!\\\\)                                               # [2] match escape
+                \\)                                                     # [2] match syntax
+                |                                                       # [2] else
+                [^ ]+                                                   # [2] match content
+            )                                                           # [2] match end
         )mx",
 
         self::ID_STRONG => "
@@ -483,9 +499,11 @@ class Sundown {
     public function convert ($text) {
 
         if (empty($text)) return null;                  // handle empty string
-        $text = preg_replace("(\\R)", "\n", $text);     // convert EOL to linux style
+        $text = preg_replace("(\\R)", "\n", $text);     // convert EOL to linux style (issues with ^ and & in regex)
+        $text = $this->_convert_block($text);           // convert sundown formatting
+        $text = stripslashes($text);                    // strip backslashes
 
-        return $this->_convert_block($text);
+        return $text;
 
     }
 
@@ -800,7 +818,7 @@ class Sundown {
 
         // convert inline formatting of the resulting string
         $match[0][static::MATCH_RESULT] = $this->_convert_inline(preg_replace(
-            "(\\((.+?)\\))",                                            // match string
+            "(^\\((.+?)\\)$)",                                          // match string
             "\\1",                                                      // remove paragraphs
             $match[2][static::MATCH_STRING]                             // string to be formatted
         ));
@@ -819,7 +837,7 @@ class Sundown {
 
         // convert inline formatting of the resulting string
         $match[0][static::MATCH_RESULT] = $this->_convert_inline(preg_replace(
-            "(\\((.+?)\\))",                                            // match string
+            "(^\\((.+?)\\)$)",                                          // match string
             "\\1",                                                      // remove paragraphs
             $match[2][static::MATCH_STRING]                             // string to be formatted
         ));
