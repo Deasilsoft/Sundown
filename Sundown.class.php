@@ -454,7 +454,7 @@ class Sundown {
      */
 
     /**
-     * Markdown constructor.
+     * Sundown constructor.
      * @param int|null $flags Binary inclusive or flags.
      * @param array $changes Changes to patterns, formats and options.
      */
@@ -475,8 +475,8 @@ class Sundown {
     }
 
     /**
-     * Convert Markdown to HTML.
-     * @param string $text Markdown input.
+     * Convert text-to-HTML.
+     * @param string $text Sundown formatted input.
      * @return null|string HTML output.
      */
     public function convert ($text) {
@@ -561,13 +561,13 @@ class Sundown {
 
             if (substr_count($text, "\n") > 1) {
 
-                $markdown = [];
+                $sundown = [];
 
-                $this->_process_pattern(static::ID_PARAGRAPH, $text, $markdown);
+                $this->_process_pattern(static::ID_PARAGRAPH, $text, $sundown);
 
                 $item = sprintf(
                     $this->formats[static::ID_ORDERED_LIST][1],
-                    $this->_get_block_result($markdown)
+                    $this->_get_block_result($sundown)
                 );
 
             } else $item = sprintf(
@@ -601,14 +601,14 @@ class Sundown {
             // otherwise just process the content as inline
             if (substr_count($text, "\n") > 1) {
 
-                $markdown = [];
+                $sundown = [];
 
                 // process the block patterns we allow inside UNORDERED_LIST (item)
-                $this->_process_pattern(static::ID_PARAGRAPH, $text, $markdown);
+                $this->_process_pattern(static::ID_PARAGRAPH, $text, $sundown);
 
                 $item = sprintf(
                     $this->formats[static::ID_UNORDERED_LIST][1],       // format for UNORDERED_LIST (item)
-                    $this->_get_block_result($markdown)                 // get the result of the string
+                    $this->_get_block_result($sundown)                  // get the result of the string
                 );
 
             } else $item = sprintf(
@@ -646,10 +646,10 @@ class Sundown {
             // otherwise just process the content as inline
             if (substr_count($text, "\n") > 1) {
 
-                $markdown = [];
+                $sundown = [];
 
                 // process the block patterns we allow inside DESCRIPTION_LIST (title/description)
-                $this->_process_pattern(static::ID_PARAGRAPH, $text, $markdown);
+                $this->_process_pattern(static::ID_PARAGRAPH, $text, $sundown);
 
                 switch (strlen($delimiter)) {
 
@@ -657,7 +657,7 @@ class Sundown {
 
                         $text = sprintf(
                             $this->formats[static::ID_DESCRIPTION_LIST][2], // format for DESCRIPTION_LIST (title)
-                            $this->_get_block_result($markdown)             // get the result of the string
+                            $this->_get_block_result($sundown)              // get the result of the string
                         );
 
                     break;
@@ -666,7 +666,7 @@ class Sundown {
 
                         $text = sprintf(
                             $this->formats[static::ID_DESCRIPTION_LIST][1], // format for DESCRIPTION_LIST (description)
-                            $this->_get_block_result($markdown)             // get the result of the string
+                            $this->_get_block_result($sundown)              // get the result of the string
                         );
 
                     break;
@@ -806,14 +806,14 @@ class Sundown {
     private function _handle_strong (&$match) {
 
         $text = $match[2][static::MATCH_STRING];                        // string to be formatted
-        $markdown = [];
+        $sundown = [];
 
         // process the inline patterns we allow inside STRONG
-        $this->_process_pattern(static::ID_EMPHASIS, $text, $markdown);
+        $this->_process_pattern(static::ID_EMPHASIS, $text, $sundown);
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_STRONG],                          // format for STRONG
-            $this->_get_inline_result($text, $markdown)                 // get the result of the string
+            $this->_get_inline_result($text, $sundown)                  // get the result of the string
         );
 
     }
@@ -821,14 +821,14 @@ class Sundown {
     private function _handle_emphasis (&$match) {
 
         $text = $match[2][static::MATCH_STRING];                        // string to be formatted
-        $markdown = [];
+        $sundown = [];
 
         // process the inline patterns we allow inside EMPHASIS
-        $this->_process_pattern(static::ID_STRONG, $text, $markdown);
+        $this->_process_pattern(static::ID_STRONG, $text, $sundown);
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_EMPHASIS],                        // format for EMPHASIS
-            $this->_get_inline_result($text, $markdown)                 // get the result of the string
+            $this->_get_inline_result($text, $sundown)                  // get the result of the string
         );
 
     }
@@ -849,7 +849,7 @@ class Sundown {
 
     }
 
-    private function _process_pattern ($id, $text, &$markdown) {
+    private function _process_pattern ($id, $text, &$sundown) {
 
         // grab all the matches from the text
         preg_match_all($this->patterns[$id], $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
@@ -862,11 +862,11 @@ class Sundown {
 
         // filter all matches of the pattern
         // these are referred to as "current match"
-        $matches = array_filter($matches, function ($match) use (&$markdown) {
+        $matches = array_filter($matches, function ($match) use (&$sundown) {
 
             // filter all previous matches that are found to be within the current match
             // also iterates to check if current match isn't inside any previous matches
-            foreach ($markdown as &$matches) $matches = array_filter($matches, function ($_match) use (&$match) {
+            foreach ($sundown as &$matches) $matches = array_filter($matches, function ($_match) use (&$match) {
 
                 if (($match[0][static::MATCH_ORIGIN] >= $_match[0][static::MATCH_ORIGIN] &&         // if (ORIGIN is after other ORIGIN
                         $match[0][static::MATCH_ORIGIN] <= $_match[0][static::MATCH_BOUNDARY]) ||   // and before other BOUNDARY)
@@ -892,62 +892,62 @@ class Sundown {
 
         });
 
-        // store the matches inside the markdown array
-        $markdown[$id] = $matches;
+        // store the matches inside the sundown array
+        $sundown[$id] = $matches;
 
     }
 
     private function _convert_block ($text) {
 
-        $markdown = [];
+        $sundown = [];
 
         // process all block patterns
-        if ($this->flags != ($this->flags | static::FLAG_NO_SCRIPTS)) $this->_process_pattern(static::ID_SCRIPT, $text, $markdown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_QUOTES)) $this->_process_pattern(static::ID_QUOTE, $text, $markdown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_TABLES)) $this->_process_pattern(static::ID_TABLE, $text, $markdown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_FIGURES)) $this->_process_pattern(static::ID_FIGURE, $text, $markdown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_IMAGES)) $this->_process_pattern(static::ID_IMAGE, $text, $markdown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_FRAMES)) $this->_process_pattern(static::ID_FRAME, $text, $markdown);
-        $this->_process_pattern(static::ID_ORDERED_LIST, $text, $markdown);
-        $this->_process_pattern(static::ID_UNORDERED_LIST, $text, $markdown);
-        $this->_process_pattern(static::ID_DESCRIPTION_LIST, $text, $markdown);
-        $this->_process_pattern(static::ID_NUMBERED_HEADER, $text, $markdown);
-        $this->_process_pattern(static::ID_UNDERLINED_HEADER, $text, $markdown);
-        $this->_process_pattern(static::ID_HORIZONTAL_RULE, $text, $markdown);
-        $this->_process_pattern(static::ID_PARAGRAPH, $text, $markdown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_SCRIPTS)) $this->_process_pattern(static::ID_SCRIPT, $text, $sundown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_QUOTES)) $this->_process_pattern(static::ID_QUOTE, $text, $sundown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_TABLES)) $this->_process_pattern(static::ID_TABLE, $text, $sundown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_FIGURES)) $this->_process_pattern(static::ID_FIGURE, $text, $sundown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_IMAGES)) $this->_process_pattern(static::ID_IMAGE, $text, $sundown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_FRAMES)) $this->_process_pattern(static::ID_FRAME, $text, $sundown);
+        $this->_process_pattern(static::ID_ORDERED_LIST, $text, $sundown);
+        $this->_process_pattern(static::ID_UNORDERED_LIST, $text, $sundown);
+        $this->_process_pattern(static::ID_DESCRIPTION_LIST, $text, $sundown);
+        $this->_process_pattern(static::ID_NUMBERED_HEADER, $text, $sundown);
+        $this->_process_pattern(static::ID_UNDERLINED_HEADER, $text, $sundown);
+        $this->_process_pattern(static::ID_HORIZONTAL_RULE, $text, $sundown);
+        $this->_process_pattern(static::ID_PARAGRAPH, $text, $sundown);
 
         // return the result of the input string
-        return $this->_get_block_result($markdown);
+        return $this->_get_block_result($sundown);
 
     }
 
     private function _convert_inline ($text) {
 
-        $markdown = [];
+        $sundown = [];
 
         // process all inline patterns
-        if ($this->flags != ($this->flags | static::FLAG_NO_SCRIPTS)) $this->_process_pattern(static::ID_CODE, $text, $markdown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_KEYBOARD)) $this->_process_pattern(static::ID_KEYBOARD, $text, $markdown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_LINKS)) $this->_process_pattern(static::ID_LINK, $text, $markdown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_ABBREVIATIONS)) $this->_process_pattern(static::ID_ABBREVIATION, $text, $markdown);
-        $this->_process_pattern(static::ID_SUB, $text, $markdown);
-        $this->_process_pattern(static::ID_SUP, $text, $markdown);
-        $this->_process_pattern(static::ID_STRONG, $text, $markdown);
-        $this->_process_pattern(static::ID_EMPHASIS, $text, $markdown);
-        $this->_process_pattern(static::ID_STRIKETHROUGH, $text, $markdown);
-        $this->_process_pattern(static::ID_LINEBREAK, $text, $markdown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_SCRIPTS)) $this->_process_pattern(static::ID_CODE, $text, $sundown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_KEYBOARD)) $this->_process_pattern(static::ID_KEYBOARD, $text, $sundown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_LINKS)) $this->_process_pattern(static::ID_LINK, $text, $sundown);
+        if ($this->flags != ($this->flags | static::FLAG_NO_ABBREVIATIONS)) $this->_process_pattern(static::ID_ABBREVIATION, $text, $sundown);
+        $this->_process_pattern(static::ID_SUB, $text, $sundown);
+        $this->_process_pattern(static::ID_SUP, $text, $sundown);
+        $this->_process_pattern(static::ID_STRONG, $text, $sundown);
+        $this->_process_pattern(static::ID_EMPHASIS, $text, $sundown);
+        $this->_process_pattern(static::ID_STRIKETHROUGH, $text, $sundown);
+        $this->_process_pattern(static::ID_LINEBREAK, $text, $sundown);
 
         // return the result of the input string
-        return $this->_get_inline_result($text, $markdown);
+        return $this->_get_inline_result($text, $sundown);
 
     }
 
-    private function _get_block_result ($markdown) {
+    private function _get_block_result ($sundown) {
 
-        // if the markdown contains paragraphs, make sure consecutive paragraphs are merged properly
-        if (isset($markdown[static::ID_PARAGRAPH])) {
+        // if the sundown contains paragraphs, make sure consecutive paragraphs are merged properly
+        if (isset($sundown[static::ID_PARAGRAPH])) {
 
-            foreach ($markdown[static::ID_PARAGRAPH] as &$match) {
+            foreach ($sundown[static::ID_PARAGRAPH] as &$match) {
 
                 // if previous match is connected with current match
                 if (isset($previous_match) && ($previous_match[0][static::MATCH_BOUNDARY] + 1) == $match[0][static::MATCH_ORIGIN]) {
@@ -965,54 +965,54 @@ class Sundown {
             }
 
             unset($previous_match, $match);                                                         // clear reference
-            $markdown[static::ID_PARAGRAPH] = array_filter($markdown[static::ID_PARAGRAPH]);        // destroy empty paragraphs
+            $sundown[static::ID_PARAGRAPH] = array_filter($sundown[static::ID_PARAGRAPH]);          // destroy empty paragraphs
 
         }
 
-        if (isset($markdown[static::ID_SCRIPT])) foreach ($markdown[static::ID_SCRIPT] as &$match) $this->_handle_script($match);
-        if (isset($markdown[static::ID_QUOTE])) foreach ($markdown[static::ID_QUOTE] as &$match) $this->_handle_quote($match);
-        if (isset($markdown[static::ID_TABLE])) foreach ($markdown[static::ID_TABLE] as &$match) $this->_handle_table($match);
-        if (isset($markdown[static::ID_FIGURE])) foreach ($markdown[static::ID_FIGURE] as &$match) $this->_handle_figure($match);
-        if (isset($markdown[static::ID_IMAGE])) foreach ($markdown[static::ID_IMAGE] as &$match) $this->_handle_image($match);
-        if (isset($markdown[static::ID_FRAME])) foreach ($markdown[static::ID_FRAME] as &$match) $this->_handle_frame($match);
-        if (isset($markdown[static::ID_ORDERED_LIST])) foreach ($markdown[static::ID_ORDERED_LIST] as &$match) $this->_handle_ordered_list($match);
-        if (isset($markdown[static::ID_UNORDERED_LIST])) foreach ($markdown[static::ID_UNORDERED_LIST] as &$match) $this->_handle_unordered_list($match);
-        if (isset($markdown[static::ID_DESCRIPTION_LIST])) foreach ($markdown[static::ID_DESCRIPTION_LIST] as &$match) $this->_handle_description_list($match);
-        if (isset($markdown[static::ID_NUMBERED_HEADER])) foreach ($markdown[static::ID_NUMBERED_HEADER] as &$match) $this->_handle_numbered_header($match);
-        if (isset($markdown[static::ID_UNDERLINED_HEADER])) foreach ($markdown[static::ID_UNDERLINED_HEADER] as &$match) $this->_handle_underlined_header($match);
-        if (isset($markdown[static::ID_HORIZONTAL_RULE])) foreach ($markdown[static::ID_HORIZONTAL_RULE] as &$match) $this->_handle_horizontal_rule($match);
-        if (isset($markdown[static::ID_PARAGRAPH])) foreach ($markdown[static::ID_PARAGRAPH] as &$match) $this->_handle_paragraph($match);
+        if (isset($sundown[static::ID_SCRIPT])) foreach ($sundown[static::ID_SCRIPT] as &$match) $this->_handle_script($match);
+        if (isset($sundown[static::ID_QUOTE])) foreach ($sundown[static::ID_QUOTE] as &$match) $this->_handle_quote($match);
+        if (isset($sundown[static::ID_TABLE])) foreach ($sundown[static::ID_TABLE] as &$match) $this->_handle_table($match);
+        if (isset($sundown[static::ID_FIGURE])) foreach ($sundown[static::ID_FIGURE] as &$match) $this->_handle_figure($match);
+        if (isset($sundown[static::ID_IMAGE])) foreach ($sundown[static::ID_IMAGE] as &$match) $this->_handle_image($match);
+        if (isset($sundown[static::ID_FRAME])) foreach ($sundown[static::ID_FRAME] as &$match) $this->_handle_frame($match);
+        if (isset($sundown[static::ID_ORDERED_LIST])) foreach ($sundown[static::ID_ORDERED_LIST] as &$match) $this->_handle_ordered_list($match);
+        if (isset($sundown[static::ID_UNORDERED_LIST])) foreach ($sundown[static::ID_UNORDERED_LIST] as &$match) $this->_handle_unordered_list($match);
+        if (isset($sundown[static::ID_DESCRIPTION_LIST])) foreach ($sundown[static::ID_DESCRIPTION_LIST] as &$match) $this->_handle_description_list($match);
+        if (isset($sundown[static::ID_NUMBERED_HEADER])) foreach ($sundown[static::ID_NUMBERED_HEADER] as &$match) $this->_handle_numbered_header($match);
+        if (isset($sundown[static::ID_UNDERLINED_HEADER])) foreach ($sundown[static::ID_UNDERLINED_HEADER] as &$match) $this->_handle_underlined_header($match);
+        if (isset($sundown[static::ID_HORIZONTAL_RULE])) foreach ($sundown[static::ID_HORIZONTAL_RULE] as &$match) $this->_handle_horizontal_rule($match);
+        if (isset($sundown[static::ID_PARAGRAPH])) foreach ($sundown[static::ID_PARAGRAPH] as &$match) $this->_handle_paragraph($match);
 
         // destroy empty matches
-        $this->_destroy_empty($markdown);
+        $this->_destroy_empty($sundown);
 
         $text = null;                                                                               // make empty string
-        foreach ($this->_sort_matches($markdown) as $match) $text .= $match[static::MATCH_RESULT];  // append each consecutive block
+        foreach ($this->_sort_matches($sundown) as $match) $text .= $match[static::MATCH_RESULT];   // append each consecutive block
 
         return $text;
 
     }
 
-    private function _get_inline_result ($text, $markdown) {
+    private function _get_inline_result ($text, $sundown) {
 
         // check if we're working with any of the patterns; then handle the matches
-        if (isset($markdown[static::ID_CODE])) foreach ($markdown[static::ID_CODE] as &$match) $this->_handle_code($match);
-        if (isset($markdown[static::ID_KEYBOARD])) foreach ($markdown[static::ID_KEYBOARD] as &$match) $this->_handle_keyboard($match);
-        if (isset($markdown[static::ID_LINK])) foreach ($markdown[static::ID_LINK] as &$match) $this->_handle_link($match);
-        if (isset($markdown[static::ID_ABBREVIATION])) foreach ($markdown[static::ID_ABBREVIATION] as &$match) $this->_handle_abbreviation($match);
-        if (isset($markdown[static::ID_SUB])) foreach ($markdown[static::ID_SUB] as &$match) $this->_handle_sub($match);
-        if (isset($markdown[static::ID_SUP])) foreach ($markdown[static::ID_SUP] as &$match) $this->_handle_sup($match);
-        if (isset($markdown[static::ID_STRONG])) foreach ($markdown[static::ID_STRONG] as &$match) $this->_handle_strong($match);
-        if (isset($markdown[static::ID_EMPHASIS])) foreach ($markdown[static::ID_EMPHASIS] as &$match) $this->_handle_emphasis($match);
-        if (isset($markdown[static::ID_STRIKETHROUGH])) foreach ($markdown[static::ID_STRIKETHROUGH] as &$match) $this->_handle_strikethrough($match);
-        if (isset($markdown[static::ID_LINEBREAK])) foreach ($markdown[static::ID_LINEBREAK] as &$match) $this->_handle_linebreak($match);
-        if (isset($markdown[static::ID_LINEBREAK])) foreach ($markdown[static::ID_LINEBREAK] as &$match) $this->_handle_linebreak($match);
+        if (isset($sundown[static::ID_CODE])) foreach ($sundown[static::ID_CODE] as &$match) $this->_handle_code($match);
+        if (isset($sundown[static::ID_KEYBOARD])) foreach ($sundown[static::ID_KEYBOARD] as &$match) $this->_handle_keyboard($match);
+        if (isset($sundown[static::ID_LINK])) foreach ($sundown[static::ID_LINK] as &$match) $this->_handle_link($match);
+        if (isset($sundown[static::ID_ABBREVIATION])) foreach ($sundown[static::ID_ABBREVIATION] as &$match) $this->_handle_abbreviation($match);
+        if (isset($sundown[static::ID_SUB])) foreach ($sundown[static::ID_SUB] as &$match) $this->_handle_sub($match);
+        if (isset($sundown[static::ID_SUP])) foreach ($sundown[static::ID_SUP] as &$match) $this->_handle_sup($match);
+        if (isset($sundown[static::ID_STRONG])) foreach ($sundown[static::ID_STRONG] as &$match) $this->_handle_strong($match);
+        if (isset($sundown[static::ID_EMPHASIS])) foreach ($sundown[static::ID_EMPHASIS] as &$match) $this->_handle_emphasis($match);
+        if (isset($sundown[static::ID_STRIKETHROUGH])) foreach ($sundown[static::ID_STRIKETHROUGH] as &$match) $this->_handle_strikethrough($match);
+        if (isset($sundown[static::ID_LINEBREAK])) foreach ($sundown[static::ID_LINEBREAK] as &$match) $this->_handle_linebreak($match);
+        if (isset($sundown[static::ID_LINEBREAK])) foreach ($sundown[static::ID_LINEBREAK] as &$match) $this->_handle_linebreak($match);
 
         // destroy empty matches
-        $this->_destroy_empty($markdown);
+        $this->_destroy_empty($sundown);
 
         // _sort_matches() has to run reverse in order to correctly insert the replacements
-        foreach ($this->_sort_matches($markdown, true) as $match) $text = substr_replace(
+        foreach ($this->_sort_matches($sundown, true) as $match) $text = substr_replace(
             $text,                                                                                  // subject string, the string we make changes to
             $match[static::MATCH_RESULT],                                                           // replacement string to insert into subject string
             $match[static::MATCH_ORIGIN],                                                           // the origin point, where we start our replacement
@@ -1023,10 +1023,10 @@ class Sundown {
 
     }
 
-    private function _destroy_empty (&$markdown) {
+    private function _destroy_empty (&$sundown) {
 
         // go trough every set of matches and filter out empty matches
-        foreach ($markdown as &$matches) $matches = array_filter($matches, function ($match) {
+        foreach ($sundown as &$matches) $matches = array_filter($matches, function ($match) {
 
             if (!isset($match[0][static::MATCH_RESULT])) return false;  // destroy matches with no result
 
@@ -1036,12 +1036,12 @@ class Sundown {
 
     }
 
-    private function _sort_matches ($markdown, $reverse = false) {
+    private function _sort_matches ($sundown, $reverse = false) {
 
         $sorted_matches = [];
 
         // collect all the relevant data into one array
-        foreach ($markdown as $matches) foreach ($matches as $match) array_push($sorted_matches, $match[0]);
+        foreach ($sundown as $matches) foreach ($matches as $match) array_push($sorted_matches, $match[0]);
 
         // sort the array beginning with the first match, or last match if $reverse = true
         usort($sorted_matches, function ($lhs, $rhs) use ($reverse) {
