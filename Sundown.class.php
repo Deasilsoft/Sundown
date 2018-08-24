@@ -96,7 +96,7 @@ class Sundown {
             \\R                                                         # line new
             (                                                           # [3] match content begin
                 (?:                                                     # [3] repeatable loop begin
-                    .+?                                                 # [3] match content
+                    .*?                                                 # [3] match content
                     \\R                                                 # [3] line new
                 )+                                                      # [3] repeatable loop end
             )                                                           # [3] match content end
@@ -324,15 +324,16 @@ class Sundown {
         self::ID_SUB => "
         (                                                               # [0]
             (?<!\\\\)                                                   # match escape
-            ((?:\\!\\^)+)                                               # [1] match syntax
-            ([^ ]+?|\\(.+?\\))                                          # [2] match content
+            !                                                           # match syntax
+            (\\^+)                                                      # [1] match syntax
+            (\\(.+?\\)|[^ ]+)                                           # [2] match content
         )mx",
 
         self::ID_SUP => "
         (                                                               # [0]
             (?<!\\\\)                                                   # match escape
             (\\^+)                                                      # [1] match syntax
-            ([^ ]+?|\\(.+?\\))                                          # [2] match content
+            (\\(.+?\\)|[^ ]+)                                           # [2] match content
         )mx",
 
         self::ID_STRONG => "
@@ -797,9 +798,39 @@ class Sundown {
 
     private function _handle_sub (&$match) {
 
+        // convert inline formatting of the resulting string
+        $match[0][static::MATCH_RESULT] = $this->_convert_inline(preg_replace(
+            "(\\((.+?)\\))",                                            // match string
+            "\\1",                                                      // remove paragraphs
+            $match[2][static::MATCH_STRING]                             // string to be formatted
+        ));
+
+        // for each occurrence of the syntax, apply format
+        for ($i = 0; $i < strlen($match[1][static::MATCH_STRING]); $i++) $match[0][static::MATCH_RESULT] = sprintf(
+
+            $this->formats[static::ID_SUB],                             // format for SUB
+            $match[0][static::MATCH_RESULT]                             // string inside previous SUB
+
+        );
+
     }
 
     private function _handle_sup (&$match) {
+
+        // convert inline formatting of the resulting string
+        $match[0][static::MATCH_RESULT] = $this->_convert_inline(preg_replace(
+            "(\\((.+?)\\))",                                            // match string
+            "\\1",                                                      // remove paragraphs
+            $match[2][static::MATCH_STRING]                             // string to be formatted
+        ));
+
+        // for each occurrence of the syntax, apply format
+        for ($i = 0; $i < strlen($match[1][static::MATCH_STRING]); $i++) $match[0][static::MATCH_RESULT] = sprintf(
+
+            $this->formats[static::ID_SUP],                             // format for SUP
+            $match[0][static::MATCH_RESULT]                             // string inside previous SUP
+
+        );
 
     }
 
