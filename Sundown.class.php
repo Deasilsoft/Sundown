@@ -685,7 +685,7 @@ class Sundown {
         $headers_row = $headers_col && preg_match("(^ *=+ *$)", $rows[0][0]);
 
         // empty cell if row headers
-        if ($headers_row) $rows[0][0] = " ";
+        if ($headers_row) $rows[0][0] = "&nbsp;";
 
         foreach ($rows as $y => &$row) {
 
