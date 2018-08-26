@@ -621,10 +621,10 @@ class Sundown {
      */
     public function convert ($text) {
 
-        if (empty($text)) return null;                  // handle empty string
-        $text = preg_replace("(\\R)", "\n", $text);     // convert EOL to linux style (issues with ^ and & in regex)
-        $text = $this->_convert_block($text);           // convert sundown formatting
-        $text = stripslashes($text);                    // strip backslashes
+        if (empty($text)) return null;                                  // handle empty string
+        $text = preg_replace("(\\R)", "\n", $text);                     // convert EOL to linux style (issues with ^ and & in regex)
+        $text = $this->_convert_block($text);                           // convert sundown formatting
+        $text = stripslashes($text);                                    // strip backslashes
 
         return $text;
 
@@ -636,93 +636,109 @@ class Sundown {
 
     private function _handle_script (&$match) {
 
+        // make string for script language lower case; this is used by thirdparty software
+        $language = strtolower($match[2][static::MATCH_STRING]);
+
         $match[0][static::MATCH_RESULT] = sprintf(
-            $this->formats[static::ID_SCRIPT],
-            strtolower($match[2][static::MATCH_STRING]),
-            $match[3][static::MATCH_STRING]
+            $this->formats[static::ID_SCRIPT],                          // format for SCRIPT
+            $language,                                                  // string for script language
+            $match[3][static::MATCH_STRING]                             // string to display in client
         );
 
     }
 
     private function _handle_quote (&$match) {
 
+        // remove epost-style quotations from string
         $text = preg_replace("(^> )m", "", $match[0][static::MATCH_STRING]);
 
         $match[0][static::MATCH_RESULT] = sprintf(
-            $this->formats[static::ID_QUOTE],
-            $this->_convert_block($text)
+            $this->formats[static::ID_QUOTE],                           // format for QUOTE
+            $this->_convert_block($text)                                // string to display in client
         );
 
     }
 
     private function _handle_table (&$match) {
 
-        $rows = preg_split("(\\R)m", $match[0][static::MATCH_STRING]);
+        // declare variables
+        $headers_col = false;
+        $thead = null;
+
+        // split each line into a separate table row
+        $rows = preg_split("(\\R)", $match[0][static::MATCH_STRING]);
 
         foreach ($rows as &$row) {
 
-            $row = preg_split("(\\|(?!$))m", $row);
-            array_shift($row);
-
-            foreach ($row as &$cell) {
-
-                $cell = preg_replace("(\\|$)m", "", $cell);
-                $cell = trim($cell);
-                if (preg_match("(^=+$)", $cell)) $cell = null;
-
-            }
+            $row = preg_replace("(^\\||\\|$)", "", $row);               // remove first delimiter and last delimiter (optional)
+            $row = preg_split("(\\|)", $row);                           // split row by cell delimiter
 
         }
 
-        $headers_col = [];
-        foreach ($rows[1] as $x => &$cell) $headers_col[$x] = is_null($cell);
+        // interpret the formatting for column headers
+        if (!empty($rows[1])) foreach ($rows[1] as &$cell) $headers_col = $headers_col || preg_match("(^ *=+ *$)", $cell);
 
-        $headers_row = (is_null($rows[0][0]) && is_null($rows[1][0]));
+        // interpret the formatting for row headers
+        $headers_row = isset($rows[0][0]) && preg_match("(^ *=+ *$)", $rows[0][0]) &&
+            isset($rows[1][0]) && preg_match("(^ *=+ *$)", $rows[1][0]);
 
-        foreach ($rows as &$row) $row = array_filter($row);
-        $rows = array_filter($rows);
+        // empty cells if formatted
+        if ($headers_row) {
+
+            $rows[0][0] = " ";
+            $rows[1][0] = " ";
+
+        }
+
+        // destroy row if formatted
+        if ($headers_col) unset($rows[1]);
 
         foreach ($rows as $y => &$row) {
 
             foreach ($row as $x => &$cell) {
 
-                $is_header = ($y == 0 && $headers_col[$x]) || ($x == 0 && $headers_row);
+                // check if cell is a header, for either column or row
+                $is_header = ($y == 0 && $headers_col) || ($x == 0 && $headers_row);
 
+                // TODO: colspan
+
+                // handle first character inside cell
                 switch (substr($cell, 0, 1)) {
 
                     case "<":
 
-                        $cell = substr($cell, 1);
-                        $cell = trim($cell);
+                        $cell = substr($cell, 1);                       // remove first character
+                        $cell = trim($cell);                            // trim whitespaces
                         $cell = sprintf(
-                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["left"],
-                            1,
-                            $cell,
-                            $y == 0 ? "col" : "row"
+                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["left"], // format for TABLE CELL LEFT
+                            1,                                          // string for colspan attribute
+                            $cell,                                      // string to display in client
+                            $y == 0 ? "col" : "row"                     // string for scope attribute
                         );
 
                     break;
 
                     case ">":
 
-                        $cell = substr($cell, 1);
-                        $cell = trim($cell);
+                        $cell = substr($cell, 1);                       // remove first character
+                        $cell = trim($cell);                            // trim whitespaces
                         $cell = sprintf(
-                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["right"],
-                            1,
-                            $cell,
-                            $y == 0 ? "col" : "row"
+                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["right"], // format for TABLE CELL RIGHT
+                            1,                                          // string for colspan attribute
+                            $cell,                                      // string to display in client
+                            $y == 0 ? "col" : "row"                     // string for scope attribute
                         );
 
                     break;
 
                     default:
 
+                        $cell = trim($cell);                            // trim whitespaces
                         $cell = sprintf(
-                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["center"],
-                            1,
-                            $cell,
-                            $y == 0 ? "col" : "row"
+                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["center"], // format for TABLE CELL CENTER
+                            1,                                          // string for colspan attribute
+                            $cell,                                      // string to display in client
+                            $y == 0 ? "col" : "row"                     // string for scope attribute
                         );
 
                     break;
@@ -733,22 +749,41 @@ class Sundown {
             }
 
             $row = sprintf(
-                $this->formats[static::ID_TABLE]["tr"],
-                implode("", $row)
+                $this->formats[static::ID_TABLE]["tr"],                 // format for TABLE ROW
+                implode("", $row)                                       // merge row
             );
 
         }
 
-        // TODO: thead, tbody, etc.
+        // if column headers, define TABLE HEAD
+        if ($headers_col) {
+
+            $thead = sprintf(
+                $this->formats[static::ID_TABLE]["thead"],              // format for TABLE HEAD
+                $rows[0]                                                // string to display in client
+            );
+
+            // destroy row
+            unset($rows[0]);
+
+        }
+
+        // put all rows that are not TABLE HEAD into TABLE BODY
+        $tbody = sprintf(
+            $this->formats[static::ID_TABLE]["tbody"],                  // format for TABLE BODY
+            implode("", $rows)                                          // merge rows
+        );
 
         $match[0][static::MATCH_RESULT] = sprintf(
-            $this->formats[static::ID_TABLE]["table"],
-            implode("", $rows)
+            $this->formats[static::ID_TABLE]["table"],                  // format for TABLE
+            $thead . $tbody                                             // merge TABLE HEAD and TABLE BODY
         );
 
     }
 
     private function _handle_figure (&$match) {
+
+        // TODO: Implement figure
 
     }
 
@@ -765,22 +800,21 @@ class Sundown {
 
     private function _handle_frame (&$match) {
 
-        $service = strtolower($match[1][static::MATCH_STRING]);
+        $service = strtolower($match[1][static::MATCH_STRING]);         // make service string lower case
 
+        // check if service exists, and makes sure it's not disabled
         if (key_exists($service, $this->options["services"]) && !empty($this->options["services"][$service])) {
 
             $match[0][static::MATCH_RESULT] = sprintf(
-                $this->formats[static::ID_FRAME],
-                $this->options["services"][$service] . $match[2][static::MATCH_STRING],
-                $this->options["frame-width"],
-                $this->options["frame-height"]
+                $this->formats[static::ID_FRAME],                       // format for FRAME
+                $this->options["services"][$service] . $match[2][static::MATCH_STRING], // string for src attribute
+                $this->options["frame-width"],                          // string for width attribute
+                $this->options["frame-height"]                          // string for height attribute
             );
 
         }
 
     }
-
-    // TODO: COMMENTS ABOVE
 
     private function _handle_description_list (&$match) {
 
