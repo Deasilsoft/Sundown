@@ -117,16 +117,23 @@ class Sundown {
 
         self::ID_TABLE => "
         (                                                               # [0]
+            ^                                                           # line begin
             (?:                                                         # repeatable start
-                ^                                                       # line begin
+                \\|                                                     # match syntax
+                [<>]?                                                   # match alignment
+                .+?                                                     # match content
+            )+                                                          # repeatable end
+            \\|?                                                        # optional syntax
+            (?:                                                         # repeatable start
+                \\R                                                     # line new
                 (?:                                                     # repeatable start
                     \\|                                                 # match syntax
                     [<>]?                                               # match alignment
                     .+?                                                 # match content
                 )+                                                      # repeatable end
                 \\|?                                                    # optional syntax
-                $                                                       # line end
             )+                                                          # repeatable end
+            $                                                           # line end
         )mx",
 
         self::ID_FIGURE => "
@@ -398,17 +405,42 @@ class Sundown {
         self::ID_SCRIPT => "<pre><code class='language-%1\$s' data-language='%1\$s'>\n%2\$s</code></pre>\n",
         self::ID_QUOTE => "<blockquote class='blockquote'>\n%s</blockquote>\n",
         self::ID_TABLE => [
-            "<table class='table'>\n%s</table>\n", "<thead>\n%s</thead>\n", "<tbody>\n%s</tbody>\n",
-            "<tr>\n%s</tr>\n", "<th class='%s' scope='%s'>\n%s</th>\n", "<td class='%s'>\n%s</td>\n",
+            "table" => "<table class='table'>\n%s</table>\n",
+            "thead" => "<thead>\n%s</thead>\n",
+            "tbody" => "<tbody>\n%s</tbody>\n",
+            "tr" => "<tr>\n%s</tr>\n",
+            "th" => [
+                "left" => "<th class='text-left' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
+                "center" => "<th class='text-center' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
+                "right" => "<th class='text-right' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
+            ],
+            "td" => [
+                "left" => "<td class='text-left' colspan='%1\$s'>\n%2\$s\n</td>\n",
+                "center" => "<td class='text-center' colspan='%1\$s'>\n%2\$s\n</td>\n",
+                "right" => "<td class='text-right' colspan='%1\$s'>\n%2\$s\n</td>\n",
+            ],
         ],
         self::ID_FIGURE => "<figure><img src='%s' title='%s' alt='%s'><figcaption>%s</figcaption></figure>",
         self::ID_IMAGE => "<img src='%s' title='%s' alt='%s'>",
         self::ID_FRAME => "<iframe src='%s' width='%s' height='%s' frameborder='0' allowfullscreen></iframe>\n",
-        self::ID_ORDERED_LIST => ["<ol>\n%s</ol>\n", "<li>\n%s</li>\n"],
-        self::ID_UNORDERED_LIST => ["<ul>\n%s</ul>\n", "<li>\n%s</li>\n"],
-        self::ID_DESCRIPTION_LIST => ["<dl>\n%s</dl>\n", "<dt>\n%s\n</dt>\n", "<dd>\n%s\n</dd>\n"],
+        self::ID_ORDERED_LIST => [
+            "ol" => "<ol>\n%s</ol>\n",
+            "li" => "<li>\n%s</li>\n",
+        ],
+        self::ID_UNORDERED_LIST => [
+            "ul" => "<ul>\n%s</ul>\n",
+            "li" => "<li>\n%s</li>\n",
+        ],
+        self::ID_DESCRIPTION_LIST => [
+            "dl" => "<dl>\n%s</dl>\n",
+            "dt" => "<dt>\n%s\n</dt>\n",
+            "dd" => "<dd>\n%s\n</dd>\n",
+        ],
         self::ID_NUMBERED_HEADER => "<h%1\$d>%2\$s</h%1\$d>\n",
-        self::ID_UNDERLINED_HEADER => ["<h1 class='display-2'>%s</h1>\n", "<h2 class='display-4'>%s</h2>\n",],
+        self::ID_UNDERLINED_HEADER => [
+            "h1" => "<h1 class='display-2'>%s</h1>\n",
+            "h2" => "<h2 class='display-4'>%s</h2>\n",
+        ],
         self::ID_HORIZONTAL_RULE => "<hr>\n",
         self::ID_PARAGRAPH => "<p>\n%s\n</p>\n",
 
@@ -534,6 +566,96 @@ class Sundown {
 
     private function _handle_table (&$match) {
 
+        $rows = preg_split("(\\R)m", $match[0][static::MATCH_STRING]);
+
+        foreach ($rows as &$row) {
+
+            $row = preg_split("(\\|(?!$))m", $row);
+            array_shift($row);
+
+            foreach ($row as &$cell) {
+
+                $cell = preg_replace("(\\|$)m", "", $cell);
+                $cell = trim($cell);
+                if (preg_match("(^=+$)", $cell)) $cell = null;
+
+            }
+
+        }
+
+        $headers_col = [];
+        foreach ($rows[1] as $x => &$cell) $headers_col[$x] = is_null($cell);
+
+        $headers_row = (is_null($rows[0][0]) && is_null($rows[1][0]));
+
+        foreach ($rows as &$row) $row = array_filter($row);
+        $rows = array_filter($rows);
+
+        foreach ($rows as $y => &$row) foreach ($row as $x => &$cell) {
+
+            $is_header = ($y == 0 && $headers_col[$x]) || ($x == 0 && $headers_row);
+
+            switch (substr($cell, 0, 1)) {
+
+                case "<":
+
+                    $cell = substr($cell, 1);
+                    $cell = trim($cell);
+                    $cell = sprintf(
+                        $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["left"],
+                        1,
+                        $cell,
+                        $y == 0 ? "col" : "row"
+                    );
+
+                break;
+
+                case ">":
+
+                    $cell = substr($cell, 1);
+                    $cell = trim($cell);
+                    $cell = sprintf(
+                        $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["right"],
+                        1,
+                        $cell,
+                        $y == 0 ? "col" : "row"
+                    );
+
+                break;
+
+                default:
+
+                    $cell = sprintf(
+                        $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["center"],
+                        1,
+                        $cell,
+                        $y == 0 ? "col" : "row"
+                    );
+
+                break;
+
+
+            }
+
+        }
+
+        foreach ($rows as &$row) {
+
+            $row = implode("", $row);
+            $row = sprintf(
+                $this->formats[static::ID_TABLE]["tr"],
+                $row
+            );
+
+        }
+
+        $table = sprintf(
+            $this->formats[static::ID_TABLE]["table"],
+            implode("", $rows)
+        );
+
+        var_dump($table);
+
     }
 
     private function _handle_figure (&$match) {
@@ -585,19 +707,19 @@ class Sundown {
                 $this->_process_pattern(static::ID_PARAGRAPH, $text, $sundown);
 
                 $item = sprintf(
-                    $this->formats[static::ID_ORDERED_LIST][1],
+                    $this->formats[static::ID_ORDERED_LIST]["li"],
                     $this->_get_block_result($sundown)
                 );
 
             } else $item = sprintf(
-                $this->formats[static::ID_ORDERED_LIST][1],
+                $this->formats[static::ID_ORDERED_LIST]["li"],
                 $this->_convert_inline($text)
             );
 
         }
 
         $match[0][static::MATCH_RESULT] = sprintf(
-            $this->formats[static::ID_ORDERED_LIST][0],
+            $this->formats[static::ID_ORDERED_LIST]["ol"],
             implode("", $list)
         );
 
@@ -626,19 +748,19 @@ class Sundown {
                 $this->_process_pattern(static::ID_PARAGRAPH, $text, $sundown);
 
                 $item = sprintf(
-                    $this->formats[static::ID_UNORDERED_LIST][1],       // format for UNORDERED_LIST (item)
+                    $this->formats[static::ID_UNORDERED_LIST]["li"],    // format for UNORDERED_LIST (item)
                     $this->_get_block_result($sundown)                  // get the result of the string
                 );
 
             } else $item = sprintf(
-                $this->formats[static::ID_UNORDERED_LIST][1],           // format for UNORDERED_LIST (item)
+                $this->formats[static::ID_UNORDERED_LIST]["li"],        // format for UNORDERED_LIST (item)
                 $this->_convert_inline($text)                           // get the result of the string
             );
 
         }
 
         $match[0][static::MATCH_RESULT] = sprintf(
-            $this->formats[static::ID_UNORDERED_LIST][0],               // format for UNORDERED_LIST (list)
+            $this->formats[static::ID_UNORDERED_LIST]["ul"],            // format for UNORDERED_LIST (list)
             implode("", $list)                                          // merge list
         );
 
@@ -675,8 +797,8 @@ class Sundown {
                     case 3:
 
                         $text = sprintf(
-                            $this->formats[static::ID_DESCRIPTION_LIST][2], // format for DESCRIPTION_LIST (title)
-                            $this->_get_block_result($sundown)              // get the result of the string
+                            $this->formats[static::ID_DESCRIPTION_LIST]["dt"],  // format for DESCRIPTION_LIST (title)
+                            $this->_get_block_result($sundown)                  // get the result of the string
                         );
 
                     break;
@@ -684,8 +806,8 @@ class Sundown {
                     case 2:
 
                         $text = sprintf(
-                            $this->formats[static::ID_DESCRIPTION_LIST][1], // format for DESCRIPTION_LIST (description)
-                            $this->_get_block_result($sundown)              // get the result of the string
+                            $this->formats[static::ID_DESCRIPTION_LIST]["dd"],  // format for DESCRIPTION_LIST (description)
+                            $this->_get_block_result($sundown)                  // get the result of the string
                         );
 
                     break;
@@ -697,8 +819,8 @@ class Sundown {
                 case 3:
 
                     $text = sprintf(
-                        $this->formats[static::ID_DESCRIPTION_LIST][2], // format for DESCRIPTION_LIST (title)
-                        $this->_convert_inline($text)                   // get the result of the string
+                        $this->formats[static::ID_DESCRIPTION_LIST]["dt"],      // format for DESCRIPTION_LIST (title)
+                        $this->_convert_inline($text)                           // get the result of the string
                     );
 
                 break;
@@ -706,8 +828,8 @@ class Sundown {
                 case 2:
 
                     $text = sprintf(
-                        $this->formats[static::ID_DESCRIPTION_LIST][1], // format for DESCRIPTION_LIST (description)
-                        $this->_convert_inline($text)                   // get the result of the string
+                        $this->formats[static::ID_DESCRIPTION_LIST]["dd"],      // format for DESCRIPTION_LIST (description)
+                        $this->_convert_inline($text)                           // get the result of the string
                     );
 
                 break;
@@ -723,7 +845,7 @@ class Sundown {
         $list = array_filter($list);
 
         $match[0][static::MATCH_RESULT] = sprintf(
-            $this->formats[static::ID_DESCRIPTION_LIST][0],             // format for DESCRIPTION_LIST (list)
+            $this->formats[static::ID_DESCRIPTION_LIST]["dl"],          // format for DESCRIPTION_LIST (list)
             implode("", $list)                                          // merge list
         );
 
@@ -747,7 +869,7 @@ class Sundown {
             case "=":                                                   // if line 2 consists of =
 
                 $match[0][static::MATCH_RESULT] = sprintf(
-                    $this->formats[static::ID_UNDERLINED_HEADER][0],    // format for UNDERLINED_HEADER with =
+                    $this->formats[static::ID_UNDERLINED_HEADER]["h1"], // format for UNDERLINED_HEADER with =
                     $match[1][static::MATCH_STRING]                     // string to display in client (line 1)
                 );
 
@@ -756,7 +878,7 @@ class Sundown {
             case "-":                                                   // if line 2 consists of -
 
                 $match[0][static::MATCH_RESULT] = sprintf(
-                    $this->formats[static::ID_UNDERLINED_HEADER][1],    // format for UNDERLINED_HEADER with -
+                    $this->formats[static::ID_UNDERLINED_HEADER]["h2"], // format for UNDERLINED_HEADER with -
                     $match[1][static::MATCH_STRING]                     // string to display in client (line 1)
                 );
 
