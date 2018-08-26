@@ -596,70 +596,69 @@ class Sundown {
         foreach ($rows as &$row) $row = array_filter($row);
         $rows = array_filter($rows);
 
-        foreach ($rows as $y => &$row) foreach ($row as $x => &$cell) {
+        foreach ($rows as $y => &$row) {
 
-            $is_header = ($y == 0 && $headers_col[$x]) || ($x == 0 && $headers_row);
+            foreach ($row as $x => &$cell) {
 
-            switch (substr($cell, 0, 1)) {
+                $is_header = ($y == 0 && $headers_col[$x]) || ($x == 0 && $headers_row);
 
-                case "<":
+                switch (substr($cell, 0, 1)) {
 
-                    $cell = substr($cell, 1);
-                    $cell = trim($cell);
-                    $cell = sprintf(
-                        $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["left"],
-                        1,
-                        $cell,
-                        $y == 0 ? "col" : "row"
-                    );
+                    case "<":
 
-                break;
+                        $cell = substr($cell, 1);
+                        $cell = trim($cell);
+                        $cell = sprintf(
+                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["left"],
+                            1,
+                            $cell,
+                            $y == 0 ? "col" : "row"
+                        );
 
-                case ">":
+                    break;
 
-                    $cell = substr($cell, 1);
-                    $cell = trim($cell);
-                    $cell = sprintf(
-                        $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["right"],
-                        1,
-                        $cell,
-                        $y == 0 ? "col" : "row"
-                    );
+                    case ">":
 
-                break;
+                        $cell = substr($cell, 1);
+                        $cell = trim($cell);
+                        $cell = sprintf(
+                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["right"],
+                            1,
+                            $cell,
+                            $y == 0 ? "col" : "row"
+                        );
 
-                default:
+                    break;
 
-                    $cell = sprintf(
-                        $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["center"],
-                        1,
-                        $cell,
-                        $y == 0 ? "col" : "row"
-                    );
+                    default:
 
-                break;
+                        $cell = sprintf(
+                            $this->formats[static::ID_TABLE][$is_header ? "th" : "td"]["center"],
+                            1,
+                            $cell,
+                            $y == 0 ? "col" : "row"
+                        );
 
+                    break;
+
+
+                }
 
             }
 
-        }
-
-        foreach ($rows as &$row) {
-
-            $row = implode("", $row);
             $row = sprintf(
                 $this->formats[static::ID_TABLE]["tr"],
-                $row
+                implode("", $row)
             );
 
         }
 
-        $table = sprintf(
+        // TODO: tfoot, thead, etc.
+
+        $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_TABLE]["table"],
             implode("", $rows)
         );
-
-        var_dump($table);
 
     }
 
@@ -1042,7 +1041,7 @@ class Sundown {
 
         // filter all matches of the pattern
         // these are referred to as "current match"
-        $matches = array_filter($matches, function ($match) use (&$sundown) {
+        $matches = array_filter($matches, function (&$match) use (&$sundown) {
 
             // filter all previous matches that are found to be within the current match
             // also iterates to check if current match isn't inside any previous matches
@@ -1122,7 +1121,7 @@ class Sundown {
 
     }
 
-    private function _get_block_result ($sundown) {
+    private function _get_block_result (&$sundown) {
 
         // if the sundown contains paragraphs, make sure consecutive paragraphs are merged properly
         if (isset($sundown[static::ID_PARAGRAPH])) {
@@ -1173,7 +1172,7 @@ class Sundown {
 
     }
 
-    private function _get_inline_result ($text, $sundown) {
+    private function _get_inline_result ($text, &$sundown) {
 
         // check if we're working with any of the patterns; then handle the matches
         if (isset($sundown[static::ID_CODE])) foreach ($sundown[static::ID_CODE] as &$match) $this->_handle_code($match);
@@ -1206,7 +1205,7 @@ class Sundown {
     private function _destroy_empty (&$sundown) {
 
         // go trough every set of matches and filter out empty matches
-        foreach ($sundown as &$matches) $matches = array_filter($matches, function ($match) {
+        foreach ($sundown as &$matches) $matches = array_filter($matches, function (&$match) {
 
             if (!isset($match[0][static::MATCH_RESULT])) return false;      // destroy matches with no result
 
@@ -1216,17 +1215,19 @@ class Sundown {
 
     }
 
-    private function _sort_matches ($sundown, $reverse = false) {
+    private function _sort_matches (&$sundown, $reverse = false) {
 
         $sorted_matches = [];
 
         // collect all the relevant data into one array
-        foreach ($sundown as $matches) foreach ($matches as $match) array_push($sorted_matches, $match[0]);
+        foreach ($sundown as &$matches) foreach ($matches as &$match) array_push($sorted_matches, $match[0]);
 
         // sort the array beginning with the first match, or last match if $reverse = true
         usort($sorted_matches, function ($lhs, $rhs) use ($reverse) {
-            if ($reverse) return $lhs[static::MATCH_ORIGIN] < $rhs[static::MATCH_ORIGIN];
-            else return $lhs[static::MATCH_ORIGIN] > $rhs[static::MATCH_ORIGIN];
+
+            if ($reverse) return $lhs[static::MATCH_ORIGIN] < $rhs[static::MATCH_ORIGIN];   // sort ascending
+            else return $lhs[static::MATCH_ORIGIN] > $rhs[static::MATCH_ORIGIN];            // sort descending
+
         });
 
         return $sorted_matches;
