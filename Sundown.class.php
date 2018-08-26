@@ -407,62 +407,148 @@ class Sundown {
          * BLOCK FORMATS
          */
 
-        self::ID_SCRIPT => "<pre><code class='language-%1\$s' data-language='%1\$s'>\n%2\$s</code></pre>\n",
-        self::ID_QUOTE => "<blockquote class='blockquote'>\n%s</blockquote>\n",
+        self::ID_SCRIPT => /** @lang text */
+            "<pre><code class='language-%1\$s' data-language='%1\$s'>\n%2\$s</code></pre>\n",
+
+        self::ID_QUOTE => /** @lang text */
+            "<blockquote class='blockquote'>\n%s</blockquote>\n",
+
         self::ID_TABLE => [
-            "table" => "<table class='table'>\n%s</table>\n",
-            "thead" => "<thead>\n%s</thead>\n",
-            "tbody" => "<tbody>\n%s</tbody>\n",
-            "tr" => "<tr>\n%s</tr>\n",
+
+            "table" => /** @lang text */
+                "<table class='table'>\n%s</table>\n",
+
+            "thead" => /** @lang text */
+                "<thead>\n%s</thead>\n",
+
+            "tbody" => /** @lang text */
+                "<tbody>\n%s</tbody>\n",
+
+            "tr" => /** @lang text */
+                "<tr>\n%s</tr>\n",
+
             "th" => [
-                "left" => "<th class='text-left' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
-                "center" => "<th class='text-center' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
-                "right" => "<th class='text-right' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
+
+                "left" => /** @lang text */
+                    "<th class='text-left' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
+
+                "center" => /** @lang text */
+                    "<th class='text-center' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
+
+                "right" => /** @lang text */
+                    "<th class='text-right' colspan='%1\$s' scope='%3\$s'>\n%2\$s\n</th>\n",
+
             ],
+
             "td" => [
-                "left" => "<td class='text-left' colspan='%1\$s'>\n%2\$s\n</td>\n",
-                "center" => "<td class='text-center' colspan='%1\$s'>\n%2\$s\n</td>\n",
-                "right" => "<td class='text-right' colspan='%1\$s'>\n%2\$s\n</td>\n",
+
+                "left" => /** @lang text */
+                    "<td class='text-left' colspan='%1\$s'>\n%2\$s\n</td>\n",
+
+                "center" => /** @lang text */
+                    "<td class='text-center' colspan='%1\$s'>\n%2\$s\n</td>\n",
+
+                "right" => /** @lang text */
+                    "<td class='text-right' colspan='%1\$s'>\n%2\$s\n</td>\n",
+
             ],
+
         ],
-        self::ID_FIGURE => "<figure><img src='%s' title='%s' alt='%s'><figcaption>%s</figcaption></figure>",
-        self::ID_IMAGE => "<img src='%s' title='%s' alt='%s'>",
-        self::ID_FRAME => "<iframe src='%s' width='%s' height='%s' frameborder='0' allowfullscreen></iframe>\n",
+
+        self::ID_FIGURE => /** @lang text */
+            "<figure><img src='%s' title='%s' alt='%s'><figcaption>%s</figcaption></figure>",
+
+        self::ID_IMAGE => /** @lang text */
+            "<img src='%s' title='%s' alt='%s'>",
+
+        self::ID_FRAME => /** @lang text */
+            "<iframe src='%s' width='%s' height='%s' frameborder='0' allowfullscreen></iframe>\n",
+
         self::ID_ORDERED_LIST => [
-            "ol" => "<ol>\n%s</ol>\n",
-            "li" => "<li>\n%s</li>\n",
+
+            "ol" => /** @lang text */
+                "<ol>\n%s</ol>\n",
+
+            "li" => /** @lang text */
+                "<li>\n%s</li>\n",
+
         ],
+
         self::ID_UNORDERED_LIST => [
-            "ul" => "<ul>\n%s</ul>\n",
-            "li" => "<li>\n%s</li>\n",
+
+            "ul" => /** @lang text */
+                "<ul>\n%s</ul>\n",
+
+            "li" => /** @lang text */
+                "<li>\n%s</li>\n",
+
         ],
+
         self::ID_DESCRIPTION_LIST => [
-            "dl" => "<dl>\n%s</dl>\n",
-            "dt" => "<dt>\n%s\n</dt>\n",
-            "dd" => "<dd>\n%s\n</dd>\n",
+
+            "dl" => /** @lang text */
+                "<dl>\n%s</dl>\n",
+
+            "dt" => /** @lang text */
+                "<dt>\n%s\n</dt>\n",
+
+            "dd" => /** @lang text */
+                "<dd>\n%s\n</dd>\n",
+
         ],
-        self::ID_NUMBERED_HEADER => "<h%1\$d>%2\$s</h%1\$d>\n",
+
+        self::ID_NUMBERED_HEADER => /** @lang text */
+            "<h%1\$d>%2\$s</h%1\$d>\n",
+
         self::ID_UNDERLINED_HEADER => [
-            "h1" => "<h1 class='display-2'>%s</h1>\n",
-            "h2" => "<h2 class='display-4'>%s</h2>\n",
+
+            "h1" => /** @lang text */
+                "<h1 class='display-2'>%s</h1>\n",
+
+            "h2" => /** @lang text */
+                "<h2 class='display-4'>%s</h2>\n",
+
         ],
-        self::ID_HORIZONTAL_RULE => "<hr>\n",
-        self::ID_PARAGRAPH => "<p>\n%s\n</p>\n",
+
+        self::ID_HORIZONTAL_RULE => /** @lang text */
+            "<hr>\n",
+
+        self::ID_PARAGRAPH => /** @lang text */
+            "<p>\n%s\n</p>\n",
 
         /*
          * INLINE FORMATS
          */
 
-        self::ID_CODE => "<code>%s</code>",
-        self::ID_KEYBOARD => "<kbd>%s</kbd>",
-        self::ID_LINK => "<a href='%s' title='%s'>%s</a>",
-        self::ID_ABBREVIATION => "<abbr title='%s'>%s</abbr>",
-        self::ID_SUB => "<sub>%s</sub>",
-        self::ID_SUP => "<sup>%s</sup>",
-        self::ID_STRIKETHROUGH => "<s>%s</s>",
-        self::ID_STRONG => "<strong>%s</strong>",
-        self::ID_EMPHASIS => "<em>%s</em>",
-        self::ID_LINEBREAK => "<br>",
+        self::ID_CODE => /** @lang text */
+            "<code>%s</code>",
+
+        self::ID_KEYBOARD => /** @lang text */
+            "<kbd>%s</kbd>",
+
+        self::ID_LINK => /** @lang text */
+            "<a href='%s' title='%s'>%s</a>",
+
+        self::ID_ABBREVIATION => /** @lang text */
+            "<abbr title='%s'>%s</abbr>",
+
+        self::ID_SUB => /** @lang text */
+            "<sub>%s</sub>",
+
+        self::ID_SUP => /** @lang text */
+            "<sup>%s</sup>",
+
+        self::ID_STRIKETHROUGH => /** @lang text */
+            "<s>%s</s>",
+
+        self::ID_STRONG => /** @lang text */
+            "<strong>%s</strong>",
+
+        self::ID_EMPHASIS => /** @lang text */
+            "<em>%s</em>",
+
+        self::ID_LINEBREAK => /** @lang text */
+            "<br>",
 
     ];
 
@@ -653,7 +739,7 @@ class Sundown {
 
         }
 
-        // TODO: tfoot, thead, etc.
+        // TODO: thead, tbody, etc.
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_TABLE]["table"],
