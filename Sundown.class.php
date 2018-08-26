@@ -1073,12 +1073,12 @@ class Sundown {
         $sundown = [];
 
         // process all block patterns
-        if ($this->flags != ($this->flags | static::FLAG_NO_SCRIPTS)) $this->_process_pattern(static::ID_SCRIPT, $text, $sundown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_QUOTES)) $this->_process_pattern(static::ID_QUOTE, $text, $sundown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_TABLES)) $this->_process_pattern(static::ID_TABLE, $text, $sundown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_FIGURES)) $this->_process_pattern(static::ID_FIGURE, $text, $sundown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_IMAGES)) $this->_process_pattern(static::ID_IMAGE, $text, $sundown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_FRAMES)) $this->_process_pattern(static::ID_FRAME, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_SCRIPTS) $this->_process_pattern(static::ID_SCRIPT, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_QUOTES) $this->_process_pattern(static::ID_QUOTE, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_TABLES) $this->_process_pattern(static::ID_TABLE, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_FIGURES) $this->_process_pattern(static::ID_FIGURE, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_IMAGES) $this->_process_pattern(static::ID_IMAGE, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_FRAMES) $this->_process_pattern(static::ID_FRAME, $text, $sundown);
         $this->_process_pattern(static::ID_ORDERED_LIST, $text, $sundown);
         $this->_process_pattern(static::ID_UNORDERED_LIST, $text, $sundown);
         $this->_process_pattern(static::ID_DESCRIPTION_LIST, $text, $sundown);
@@ -1097,10 +1097,10 @@ class Sundown {
         $sundown = [];
 
         // process all inline patterns
-        if ($this->flags != ($this->flags | static::FLAG_NO_SCRIPTS)) $this->_process_pattern(static::ID_CODE, $text, $sundown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_KEYBOARD)) $this->_process_pattern(static::ID_KEYBOARD, $text, $sundown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_LINKS)) $this->_process_pattern(static::ID_LINK, $text, $sundown);
-        if ($this->flags != ($this->flags | static::FLAG_NO_ABBREVIATIONS)) $this->_process_pattern(static::ID_ABBREVIATION, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_SCRIPTS) $this->_process_pattern(static::ID_CODE, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_KEYBOARD) $this->_process_pattern(static::ID_KEYBOARD, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_LINKS) $this->_process_pattern(static::ID_LINK, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_ABBREVIATIONS) $this->_process_pattern(static::ID_ABBREVIATION, $text, $sundown);
         $this->_process_pattern(static::ID_SUB, $text, $sundown);
         $this->_process_pattern(static::ID_SUP, $text, $sundown);
         $this->_process_pattern(static::ID_STRONG, $text, $sundown);
@@ -1184,10 +1184,10 @@ class Sundown {
 
         // _sort_matches() has to run reverse in order to correctly insert the replacements
         foreach ($this->_sort_matches($sundown, true) as $match) $text = substr_replace(
-            $text,                                                                                  // subject string, the string we make changes to
-            $match[static::MATCH_RESULT],                                                           // replacement string to insert into subject string
-            $match[static::MATCH_ORIGIN],                                                           // the origin point, where we start our replacement
-            $match[static::MATCH_BOUNDARY] - $match[static::MATCH_ORIGIN]                           // the string length, or boundary point, where we end our replacement
+            $text,                                                          // subject string, the string we make changes to
+            $match[static::MATCH_RESULT],                                   // replacement string to insert into subject string
+            $match[static::MATCH_ORIGIN],                                   // the origin point, where we start our replacement
+            $match[static::MATCH_BOUNDARY] - $match[static::MATCH_ORIGIN]   // the string length of our original string
         );
 
         return $text;
@@ -1199,7 +1199,7 @@ class Sundown {
         // go trough every set of matches and filter out empty matches
         foreach ($sundown as &$matches) $matches = array_filter($matches, function ($match) {
 
-            if (!isset($match[0][static::MATCH_RESULT])) return false;  // destroy matches with no result
+            if (!isset($match[0][static::MATCH_RESULT])) return false;      // destroy matches with no result
 
             return $match;
 
