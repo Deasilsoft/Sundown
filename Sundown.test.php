@@ -175,4 +175,8 @@ This is the `**same**` paragraph, but different.
 This is a new paragraph.  
 
 
+
+This is how you use ``CTRL + K``... You get {HTML}(Hyper-Text Markup Language).  
+
+
 ");

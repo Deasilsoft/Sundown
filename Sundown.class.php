@@ -292,19 +292,19 @@ class Sundown {
          * INLINE PATTERNS
          */
 
-        self::ID_CODE => "
+        self::ID_KEYBOARD => "
         (                                                               # [0]
             (?<!\\\\)                                                   # match escape
-            (`)                                                         # [1] match begin
+            (``)                                                        # [1] match begin
             (.+?)                                                       # [2] match content
             (?<!\\\\)                                                   # match escape
             \\1                                                         # match end
         )mx",
 
-        self::ID_KEYBOARD => "
+        self::ID_CODE => "
         (                                                               # [0]
             (?<!\\\\)                                                   # match escape
-            (``)                                                        # [1] match begin
+            (`)                                                         # [1] match begin
             (.+?)                                                       # [2] match content
             (?<!\\\\)                                                   # match escape
             \\1                                                         # match end
@@ -520,11 +520,11 @@ class Sundown {
          * INLINE FORMATS
          */
 
-        self::ID_CODE => /** @lang text */
-            "<code>%s</code>",
-
         self::ID_KEYBOARD => /** @lang text */
             "<kbd>%s</kbd>",
+
+        self::ID_CODE => /** @lang text */
+            "<code>%s</code>",
 
         self::ID_LINK => /** @lang text */
             "<a href='%s' title='%s'>%s</a>",
@@ -1002,16 +1002,21 @@ class Sundown {
 
     }
 
+    private function _handle_keyboard (&$match) {
+
+        $match[0][static::MATCH_RESULT] = sprintf(
+            $this->formats[static::ID_KEYBOARD],                        // format for KEYBOARD
+            $match[2][static::MATCH_STRING]                             // string to display in client
+        );
+
+    }
+
     private function _handle_code (&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_CODE],                            // format for CODE
             $match[2][static::MATCH_STRING]                             // string to display in client
         );
-
-    }
-
-    private function _handle_keyboard (&$match) {
 
     }
 
@@ -1027,6 +1032,12 @@ class Sundown {
     }
 
     private function _handle_abbreviation (&$match) {
+
+        $match[0][static::MATCH_RESULT] = sprintf(
+            $this->formats[static::ID_ABBREVIATION],                    // format for ABBREVIATION
+            $match[2][static::MATCH_STRING],                            // string for title attribute
+            $match[1][static::MATCH_STRING]                             // string to display in client
+        );
 
     }
 
@@ -1191,8 +1202,8 @@ class Sundown {
         $sundown = [];
 
         // process all inline patterns
-        if ($this->flags ^ static::FLAG_NO_CODES) $this->_process_pattern(static::ID_CODE, $text, $sundown);
         if ($this->flags ^ static::FLAG_NO_KEYBOARD) $this->_process_pattern(static::ID_KEYBOARD, $text, $sundown);
+        if ($this->flags ^ static::FLAG_NO_CODES) $this->_process_pattern(static::ID_CODE, $text, $sundown);
         if ($this->flags ^ static::FLAG_NO_LINKS) $this->_process_pattern(static::ID_LINK, $text, $sundown);
         if ($this->flags ^ static::FLAG_NO_ABBREVIATIONS) $this->_process_pattern(static::ID_ABBREVIATION, $text, $sundown);
         if ($this->flags ^ static::FLAG_NO_SUB) $this->_process_pattern(static::ID_SUB, $text, $sundown);
@@ -1261,8 +1272,8 @@ class Sundown {
     private function _get_inline_result ($text, &$sundown) {
 
         // check if we're working with any of the patterns; then handle the matches
-        if (isset($sundown[static::ID_CODE])) foreach ($sundown[static::ID_CODE] as &$match) $this->_handle_code($match);
         if (isset($sundown[static::ID_KEYBOARD])) foreach ($sundown[static::ID_KEYBOARD] as &$match) $this->_handle_keyboard($match);
+        if (isset($sundown[static::ID_CODE])) foreach ($sundown[static::ID_CODE] as &$match) $this->_handle_code($match);
         if (isset($sundown[static::ID_LINK])) foreach ($sundown[static::ID_LINK] as &$match) $this->_handle_link($match);
         if (isset($sundown[static::ID_ABBREVIATION])) foreach ($sundown[static::ID_ABBREVIATION] as &$match) $this->_handle_abbreviation($match);
         if (isset($sundown[static::ID_SUB])) foreach ($sundown[static::ID_SUB] as &$match) $this->_handle_sub($match);
