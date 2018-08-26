@@ -678,20 +678,14 @@ class Sundown {
         // interpret the formatting for column headers
         if (!empty($rows[1])) foreach ($rows[1] as &$cell) $headers_col = $headers_col || preg_match("(^ *=+ *$)", $cell);
 
-        // interpret the formatting for row headers
-        $headers_row = isset($rows[0][0]) && preg_match("(^ *=+ *$)", $rows[0][0]) &&
-            isset($rows[1][0]) && preg_match("(^ *=+ *$)", $rows[1][0]);
-
-        // empty cells if formatted
-        if ($headers_row) {
-
-            $rows[0][0] = " ";
-            $rows[1][0] = " ";
-
-        }
-
-        // destroy row if formatted
+        // destroy row if column headers
         if ($headers_col) unset($rows[1]);
+
+        // interpret the formatting for row headers
+        $headers_row = $headers_col && preg_match("(^ *=+ *$)", $rows[0][0]);
+
+        // empty cell if row headers
+        if ($headers_row) $rows[0][0] = " ";
 
         foreach ($rows as $y => &$row) {
 
