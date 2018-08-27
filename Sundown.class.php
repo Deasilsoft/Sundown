@@ -1059,6 +1059,8 @@ class Sundown {
 
     }
 
+    // TODO: Implement references
+
     private function _handle_abbreviation (&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
