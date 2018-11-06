@@ -455,11 +455,31 @@ class Sundown {
 
         ],
 
-        self::ID_FIGURE => /** @lang text */
-            "<figure><img src='%s' title='%s' alt='%s'><figcaption>%s</figcaption></figure>",
+        self::ID_FIGURE => [
 
-        self::ID_IMAGE => /** @lang text */
-            "<img src='%s' title='%s' alt='%s'>",
+            "default" => /** @lang text */
+                "<figure><img src='%s' class='float-none' title='%s' alt='%s'><figcaption>%s</figcaption></figure>\n",
+
+            "left" => /** @lang text */
+                "<figure><img src='%s' class='float-left' title='%s' alt='%s'><figcaption>%s</figcaption></figure>\n",
+
+            "right" => /** @lang text */
+                "<figure><img src='%s' class='float-right' title='%s' alt='%s'><figcaption>%s</figcaption></figure>\n",
+
+        ],
+
+        self::ID_IMAGE => [
+
+            "default" => /** @lang text */
+                "<img src='%s' class='float-none' title='%s' alt='%s'>\n",
+
+            "left" => /** @lang text */
+                "<img src='%s' class='float-left' title='%s' alt='%s'>\n",
+
+            "right" => /** @lang text */
+                "<img src='%s' class='float-right' title='%s' alt='%s'>\n",
+
+        ],
 
         self::ID_FRAME => /** @lang text */
             "<iframe src='%s' width='%s' height='%s' frameborder='0' allowfullscreen></iframe>\n",
@@ -777,17 +797,59 @@ class Sundown {
 
     private function _handle_figure (&$match) {
 
-        // TODO: Implement figure
+        $format = $this->formats[static::ID_FIGURE]["default"];
+
+        switch ($match[1][static::MATCH_STRING]) {
+
+            case "<":
+
+                $format = $this->formats[static::ID_FIGURE]["left"];
+
+            break;
+
+            case ">":
+
+                $format = $this->formats[static::ID_FIGURE]["right"];
+
+            break;
+
+        }
+
+        $match[0][static::MATCH_RESULT] = sprintf(
+            $format,                                                    // format for IMAGE
+            $match[4][static::MATCH_STRING],                            // string for src attribute
+            isset($match[5]) ? $match[5][static::MATCH_STRING] : null,  // string for title attribute
+            $match[2][static::MATCH_STRING],                            // string for alt attribute
+            $match[3][static::MATCH_STRING]                             // string for caption
+        );
 
     }
 
     private function _handle_image (&$match) {
 
+        $format = $this->formats[static::ID_IMAGE]["default"];
+
+        switch ($match[1][static::MATCH_STRING]) {
+
+            case "<":
+
+                $format = $this->formats[static::ID_IMAGE]["left"];
+
+            break;
+
+            case ">":
+
+                $format = $this->formats[static::ID_IMAGE]["right"];
+
+            break;
+
+        }
+
         $match[0][static::MATCH_RESULT] = sprintf(
-            $this->formats[static::ID_IMAGE],                           // format for IMAGE
-            $match[2][static::MATCH_STRING],                            // string for src attribute
-            isset($match[3]) ? $match[3][static::MATCH_STRING] : null,  // string for title attribute
-            $match[1][static::MATCH_STRING]                             // string for alt attribute
+            $format,                                                    // format for IMAGE
+            $match[3][static::MATCH_STRING],                            // string for src attribute
+            isset($match[4]) ? $match[4][static::MATCH_STRING] : null,  // string for title attribute
+            $match[2][static::MATCH_STRING]                             // string for alt attribute
         );
 
     }

@@ -24,7 +24,13 @@ Big Header
 
 ![Alt Text](http://imagehost.com/image.png \"Some Title, YO!\")
 
-![Alt Text 2](http://imagehost.com/image2.png)
+!<[Alt Text 2](http://imagehost.com/image2.png)
+
+
+
+![Alt Text][Test Caption](http://imagehost.com/image.png \"Some Title, YO!\")
+
+!>[Alt Text 2][Test Caption 2](http://imagehost.com/image2.png)
 
 
 
