@@ -598,7 +598,7 @@ class Sundown {
      * @param int|null $flags Binary inclusive or flags.
      * @param array $changes Changes to patterns, formats and options.
      */
-    public function __construct ($flags = null, $changes = []) {
+    public function __construct($flags = null, $changes = []) {
 
         $this->flags = $flags;
 
@@ -619,7 +619,7 @@ class Sundown {
      * @param string $text Sundown formatted input.
      * @return null|string HTML output.
      */
-    public function convert ($text) {
+    public function convert($text) {
 
         if (empty($text)) return null;                                  // handle empty string
         $text = preg_replace("(\\R)", "\n", $text);                     // convert EOL to linux style (issues with ^ and & in regex)
@@ -634,7 +634,7 @@ class Sundown {
      * PRIVATE FUNCTIONS
      */
 
-    private function _handle_script (&$match) {
+    private function _handle_script(&$match) {
 
         // make string for script language lower case; this is used by thirdparty software
         $language = strtolower($match[2][static::MATCH_STRING]);
@@ -647,7 +647,7 @@ class Sundown {
 
     }
 
-    private function _handle_quote (&$match) {
+    private function _handle_quote(&$match) {
 
         // remove epost-style quotations from string
         $text = preg_replace("(^> )m", "", $match[0][static::MATCH_STRING]);
@@ -659,7 +659,7 @@ class Sundown {
 
     }
 
-    private function _handle_table (&$match) {
+    private function _handle_table(&$match) {
 
         // declare variables
         $headers_col = false;
@@ -710,7 +710,7 @@ class Sundown {
                             $y == 0 ? "col" : "row"                     // string for scope attribute
                         );
 
-                    break;
+                        break;
 
                     case ">":
 
@@ -723,7 +723,7 @@ class Sundown {
                             $y == 0 ? "col" : "row"                     // string for scope attribute
                         );
 
-                    break;
+                        break;
 
                     default:
 
@@ -735,8 +735,7 @@ class Sundown {
                             $y == 0 ? "col" : "row"                     // string for scope attribute
                         );
 
-                    break;
-
+                        break;
 
                 }
 
@@ -775,13 +774,19 @@ class Sundown {
 
     }
 
-    private function _handle_figure (&$match) {
+    private function _handle_figure(&$match) {
 
-        // TODO: Implement figure
+        $match[0][static::MATCH_RESULT] = sprintf(
+            $this->formats[static::ID_FIGURE],                          // format for IMAGE
+            $match[3][static::MATCH_STRING],                            // string for src attribute
+            isset($match[4]) ? $match[3][static::MATCH_STRING] : null,  // string for title attribute
+            $match[1][static::MATCH_STRING],                            // string for alt attribute
+            $match[2][static::MATCH_STRING]                             // string for caption
+        );
 
     }
 
-    private function _handle_image (&$match) {
+    private function _handle_image(&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_IMAGE],                           // format for IMAGE
@@ -792,7 +797,7 @@ class Sundown {
 
     }
 
-    private function _handle_frame (&$match) {
+    private function _handle_frame(&$match) {
 
         $service = strtolower($match[1][static::MATCH_STRING]);         // make service string lower case
 
@@ -810,7 +815,7 @@ class Sundown {
 
     }
 
-    private function _handle_description_list (&$match) {
+    private function _handle_description_list(&$match) {
 
         // split up the string into a list, where every element is a list item
         $list = preg_split("((?:^|\\R)([\\-+*]{2,3}) )m", $match[0][static::MATCH_STRING], null, PREG_SPLIT_DELIM_CAPTURE);
@@ -845,7 +850,7 @@ class Sundown {
                             $this->_get_block_result($sundown)                  // get the result of the string
                         );
 
-                    break;
+                        break;
 
                     case 2:
 
@@ -854,7 +859,7 @@ class Sundown {
                             $this->_get_block_result($sundown)                  // get the result of the string
                         );
 
-                    break;
+                        break;
 
                 }
 
@@ -867,7 +872,7 @@ class Sundown {
                         $this->_convert_inline($text)                           // get the result of the string
                     );
 
-                break;
+                    break;
 
                 case 2:
 
@@ -876,7 +881,7 @@ class Sundown {
                         $this->_convert_inline($text)                           // get the result of the string
                     );
 
-                break;
+                    break;
 
             }
 
@@ -895,7 +900,7 @@ class Sundown {
 
     }
 
-    private function _handle_ordered_list (&$match) {
+    private function _handle_ordered_list(&$match) {
 
         // split up the string into a list, where every element is a list item
         $list = preg_split("(^\d+\. )m", $match[0][static::MATCH_STRING]);
@@ -934,7 +939,7 @@ class Sundown {
 
     }
 
-    private function _handle_unordered_list (&$match) {
+    private function _handle_unordered_list(&$match) {
 
         // split up the string into a list, where every element is a list item
         $list = preg_split("(^[\\-+*] )m", $match[0][static::MATCH_STRING]);
@@ -973,7 +978,7 @@ class Sundown {
 
     }
 
-    private function _handle_numbered_header (&$match) {
+    private function _handle_numbered_header(&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_NUMBERED_HEADER],                 // format for NUMBERED_HEADER
@@ -983,7 +988,7 @@ class Sundown {
 
     }
 
-    private function _handle_underlined_header (&$match) {
+    private function _handle_underlined_header(&$match) {
 
         // switch first char on line 2
         switch ($match[2][static::MATCH_STRING]) {
@@ -995,7 +1000,7 @@ class Sundown {
                     $match[1][static::MATCH_STRING]                     // string to display in client (line 1)
                 );
 
-            break;
+                break;
 
             case "-":                                                   // if line 2 consists of -
 
@@ -1004,20 +1009,20 @@ class Sundown {
                     $match[1][static::MATCH_STRING]                     // string to display in client (line 1)
                 );
 
-            break;
+                break;
 
         }
 
     }
 
-    private function _handle_horizontal_rule (&$match) {
+    private function _handle_horizontal_rule(&$match) {
 
         // HORIZONTAL_RULE only display the format
         $match[0][static::MATCH_RESULT] = $this->formats[static::ID_HORIZONTAL_RULE];
 
     }
 
-    private function _handle_paragraph (&$match) {
+    private function _handle_paragraph(&$match) {
 
         if (!ctype_space($match[0][static::MATCH_STRING])) {            // match isn't only whitespace
 
@@ -1030,7 +1035,7 @@ class Sundown {
 
     }
 
-    private function _handle_keyboard (&$match) {
+    private function _handle_keyboard(&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_KEYBOARD],                        // format for KEYBOARD
@@ -1039,7 +1044,7 @@ class Sundown {
 
     }
 
-    private function _handle_code (&$match) {
+    private function _handle_code(&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_CODE],                            // format for CODE
@@ -1048,7 +1053,7 @@ class Sundown {
 
     }
 
-    private function _handle_link (&$match) {
+    private function _handle_link(&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_LINK],                            // format for LINK
@@ -1061,7 +1066,7 @@ class Sundown {
 
     // TODO: Implement references
 
-    private function _handle_abbreviation (&$match) {
+    private function _handle_abbreviation(&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_ABBREVIATION],                    // format for ABBREVIATION
@@ -1071,7 +1076,7 @@ class Sundown {
 
     }
 
-    private function _handle_sub (&$match) {
+    private function _handle_sub(&$match) {
 
         // convert inline formatting of the resulting string
         $match[0][static::MATCH_RESULT] = $this->_convert_inline(preg_replace(
@@ -1090,7 +1095,7 @@ class Sundown {
 
     }
 
-    private function _handle_sup (&$match) {
+    private function _handle_sup(&$match) {
 
         // convert inline formatting of the resulting string
         $match[0][static::MATCH_RESULT] = $this->_convert_inline(preg_replace(
@@ -1109,7 +1114,7 @@ class Sundown {
 
     }
 
-    private function _handle_strikethrough (&$match) {
+    private function _handle_strikethrough(&$match) {
 
         $match[0][static::MATCH_RESULT] = sprintf(
             $this->formats[static::ID_STRIKETHROUGH],                   // format for STRIKEOUT
@@ -1118,7 +1123,7 @@ class Sundown {
 
     }
 
-    private function _handle_strong (&$match) {
+    private function _handle_strong(&$match) {
 
         $text = $match[2][static::MATCH_STRING];                        // string to be formatted
         $sundown = [];
@@ -1133,7 +1138,7 @@ class Sundown {
 
     }
 
-    private function _handle_emphasis (&$match) {
+    private function _handle_emphasis(&$match) {
 
         $text = $match[2][static::MATCH_STRING];                        // string to be formatted
         $sundown = [];
@@ -1148,14 +1153,14 @@ class Sundown {
 
     }
 
-    private function _handle_linebreak (&$match) {
+    private function _handle_linebreak(&$match) {
 
         // LINEBREAK only display the format
         $match[0][static::MATCH_RESULT] = $this->formats[static::ID_LINEBREAK];
 
     }
 
-    private function _process_pattern ($id, $text, &$sundown) {
+    private function _process_pattern($id, $text, &$sundown) {
 
         // grab all the matches from the text
         preg_match_all($this->patterns[$id], $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
@@ -1203,7 +1208,7 @@ class Sundown {
 
     }
 
-    private function _convert_block ($text) {
+    private function _convert_block($text) {
 
         $sundown = [];
 
@@ -1227,7 +1232,7 @@ class Sundown {
 
     }
 
-    private function _convert_inline ($text) {
+    private function _convert_inline($text) {
 
         $sundown = [];
 
@@ -1248,7 +1253,7 @@ class Sundown {
 
     }
 
-    private function _get_block_result (&$sundown) {
+    private function _get_block_result(&$sundown) {
 
         // if the sundown contains paragraphs, make sure consecutive paragraphs are merged properly
         if (isset($sundown[static::ID_PARAGRAPH])) {
@@ -1299,7 +1304,7 @@ class Sundown {
 
     }
 
-    private function _get_inline_result ($text, &$sundown) {
+    private function _get_inline_result($text, &$sundown) {
 
         // check if we're working with any of the patterns; then handle the matches
         if (isset($sundown[static::ID_KEYBOARD])) foreach ($sundown[static::ID_KEYBOARD] as &$match) $this->_handle_keyboard($match);
@@ -1329,7 +1334,7 @@ class Sundown {
 
     }
 
-    private function _destroy_empty (&$sundown) {
+    private function _destroy_empty(&$sundown) {
 
         // go trough every set of matches and filter out empty matches
         foreach ($sundown as &$matches) $matches = array_filter($matches, function (&$match) {
@@ -1342,7 +1347,7 @@ class Sundown {
 
     }
 
-    private function _sort_matches (&$sundown, $reverse = false) {
+    private function _sort_matches(&$sundown, $reverse = false) {
 
         $sorted_matches = [];
 
