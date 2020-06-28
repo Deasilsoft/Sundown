@@ -1,18 +1,24 @@
 {
-    "name": "deasilsoft/sundown",
-    "description": "A text-to-HTML conversion tool.",
-    "type": "library",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Sondre Benjamin Aasen",
-            "email": "eleljrk@gmail.com"
-        }
-    ],
-    "require": {
-      "php": ">=7"
-    },
-    "require-dev": {
-        "codeception/codeception": "^2.5"
+  "name": "deasilsoft/sundown",
+  "description": "A text-to-HTML conversion tool.",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Sondre Benjamin Aasen",
+      "email": "eleljrk@gmail.com"
     }
+  ],
+  "require": {
+    "php": ">=7",
+    "ext-ctype": "*"
+  },
+  "require-dev": {
+    "codeception/codeception": "^2.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Deasilsoft\\Sundown\\": "src/"
+    }
+  }
 }
