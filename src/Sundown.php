@@ -277,13 +277,13 @@ class Sundown
                 case 3:
                     $text = sprintf(
                         $this->_formats[ID::DESCRIPTION_LIST]["title"],                                                 // format for DESCRIPTION_LIST (title)
-                        $this->_convert_inline($text)                                                                   // get the result of the string
+                        $this->_ConvertInline($text)                                                                    // get the result of the string
                     );
                 break;
                 case 2:
                     $text = sprintf(
                         $this->_formats[ID::DESCRIPTION_LIST]["item"],                                                  // format for DESCRIPTION_LIST (description)
-                        $this->_convert_inline($text)                                                                   // get the result of the string
+                        $this->_ConvertInline($text)                                                                    // get the result of the string
                     );
                 break;
             }
@@ -326,7 +326,7 @@ class Sundown
             }
             else $item = sprintf(                                                                                       // otherwise just process the content as inline
                 $this->_formats[$id]["item"],                                                                           // format for UNORDERED_LIST
-                $this->_convert_inline($text)                                                                           // get the result of the string
+                $this->_ConvertInline($text)                                                                            // get the result of the string
             );
         }
         $match[0][self::MATCH_RESULT] = sprintf(
@@ -375,7 +375,7 @@ class Sundown
         {
             $match[0][self::MATCH_RESULT] = sprintf(
                 $this->_formats[ID::PARAGRAPH],                                                                         // format for PARAGRAPH
-                $this->_convert_inline($match[0][self::MATCH_STRING])                                                   // string to display in client
+                $this->_ConvertInline($match[0][self::MATCH_STRING])                                                    // string to display in client
             );
         }
     }
@@ -419,7 +419,7 @@ class Sundown
 
     private function _HandleSub (&$match)
     {
-        $match[0][self::MATCH_RESULT] = $this->_convert_inline(preg_replace(                                            // convert inline formatting of the resulting string
+        $match[0][self::MATCH_RESULT] = $this->_ConvertInline(preg_replace(                                             // convert inline formatting of the resulting string
             "(^\\((.+?)\\)$)",                                                                                          // match string
             "\\1",                                                                                                      // remove paragraphs
             $match[2][self::MATCH_STRING]                                                                               // string to be formatted
@@ -433,7 +433,7 @@ class Sundown
 
     private function _HandleSup (&$match)
     {
-        $match[0][self::MATCH_RESULT] = $this->_convert_inline(preg_replace(                                            // convert inline formatting of the resulting string
+        $match[0][self::MATCH_RESULT] = $this->_ConvertInline(preg_replace(                                             // convert inline formatting of the resulting string
             "(^\\((.+?)\\)$)",                                                                                          // match string
             "\\1",                                                                                                      // remove paragraphs
             $match[2][self::MATCH_STRING]                                                                               // string to be formatted
@@ -547,7 +547,7 @@ class Sundown
         return $this->_GetBlockResult($sundown);                                                                        // return the result of the input string
     }
 
-    private function _convert_inline ($text)
+    private function _ConvertInline ($text)
     {
         $sundown = [];
 
@@ -572,7 +572,7 @@ class Sundown
         {
             foreach ($sundown[ID::PARAGRAPH] as &$match)
             {
-                if (isset($previous_match) && ($previous_match[0][self::MATCH_BOUNDARY] + 1) == $match[0][self::MATCH_ORIGIN])  // if previous match is connected with current match
+                if (isset($previous_match) && ($previous_match[0][self::MATCH_BOUNDARY] + 1) == $match[0][self::MATCH_ORIGIN])      // if previous match is connected with current match
                 {
                     $match[0][self::MATCH_STRING] = $previous_match[0][self::MATCH_STRING] . "\n" . $match[0][self::MATCH_STRING];  // merge previous match and current match, then empty previous match
                     $match[0][self::MATCH_ORIGIN] = $previous_match[0][self::MATCH_ORIGIN];
